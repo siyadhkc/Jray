@@ -6,6 +6,7 @@
       "name": "jray",
       "devDependencies": {
         "@types/bun": "latest",
+        "@types/node": "^25.5.2",
       },
       "peerDependencies": {
         "typescript": "^5",
