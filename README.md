@@ -1,15 +1,44 @@
-# jray
+# 🚀 jray (JSON X-Ray)
 
-To install dependencies:
+jray is a CLI tool that transforms complex JSON into grep-friendly key-value paths.
+
+## 🔥 Features
+
+* Flatten nested JSON into readable paths
+* Grep-friendly output
+* Simple CLI usage
+
+## ⚡ Usage
 
 ```bash
-bun install
+cat data.json | bun src/cli.ts
 ```
 
-To run:
+### Example
 
-```bash
-bun run index.ts
+Input:
+
+```json
+{
+  "user": {
+    "name": "Elliot Alderson"
+  }
+}
 ```
 
-This project was created using `bun init` in bun v1.3.11. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+Output:
+
+```
+user.name=Elliot Alderson
+```
+
+## 🛠 Tech Stack
+
+* Bun
+* TypeScript
+
+## 🚧 Roadmap
+
+* [ ] Array support
+* [ ] `--unray` reconstruction
+* [ ] Streaming large JSON
