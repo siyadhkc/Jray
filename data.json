@@ -1,5 +1,9 @@
 {
   "user": {
-    "name": "Elliot Andreson"
+    "name": "Elliot Alderson",
+    "orders": [
+      { "price": 100 },
+      { "price": 200 }
+    ]
   }
 }
