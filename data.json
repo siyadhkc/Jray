@@ -1,9 +1,7 @@
 {
-  "user": {
-    "name": "Elliot Alderson",
-    "orders": [
-      { "price": 100 },
-      { "price": 200 }
-    ]
-  }
+  "name": "Elliot Anderson",
+  "active": true,
+  "data": null,
+  "emptyArr": [],
+  "emptyObj": {}
 }
