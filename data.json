@@ -1,7 +1,5 @@
 {
-  "name": "Elliot Anderson",
-  "active": true,
-  "data": null,
-  "emptyArr": [],
-  "emptyObj": {}
+  "user": {
+    "name": "Ziya"
+  }
 }

@@ -2,6 +2,7 @@
 
 import { flatten } from "./flatten";
 import { readFileSync } from "fs";
+import { unflatten } from "./unflatten";
 
 async function main() {
   try {
@@ -38,6 +39,17 @@ async function main() {
     console.error("Error:", err.message);
     process.exit(1);
   }
+  const args = process.argv.slice(2);
+
+if (args.includes("--unray")) {
+  const input = await Bun.stdin.text();
+  const lines = input.trim().split("\n");
+
+  const result = unflatten(lines);
+  console.log(JSON.stringify(result, null, 2));
+  return;
 }
+}
+
 
 main();
