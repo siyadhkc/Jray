@@ -1,16 +1,22 @@
 {
   "name": "jray",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
+  "version": "0.1.0",
+  "description": "A modern JSON flattener and query tool — like gron meets jq",
+  "author": "Your Name",
+  "license": "MIT",
+
   "bin": {
-    "jray": "src/cli.ts"
+    "jray": "./src/cli.ts"
   },
+
+  "scripts": {
+    "dev": "bun run src/cli.ts",
+    "test": "bun test",
+    "build": "bun build src/cli.ts --compile --outfile dist/jray"
+  },
+
   "devDependencies": {
-    "@types/bun": "latest",
-    "@types/node": "^25.5.2"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
+    "typescript": "^5.0.0",
+    "@types/bun": "latest"
   }
 }
