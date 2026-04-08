@@ -1,0 +1,144 @@
+{
+  "organization": {
+    "id": "org_01HXYZ",
+    "name": "Acme Corporation",
+    "founded": 2019,
+    "active": true,
+    "headquarters": {
+      "street": "221B Baker Street",
+      "city": "London",
+      "country": "GB",
+      "zip": "NW1 6XE",
+      "coordinates": {
+        "lat": 51.5237,
+        "lng": -0.1585
+      }
+    },
+    "contact": {
+      "email": "hello@acme.io",
+      "phone": "+44-20-7946-0958",
+      "website": "https://acme.io"
+    }
+  },
+  "users": [
+    {
+      "id": "usr_001",
+      "name": "Alice Pemberton",
+      "email": "alice@acme.io",
+      "role": "admin",
+      "active": true,
+      "age": 32,
+      "joined": "2019-03-15",
+      "preferences": {
+        "theme": "dark",
+        "language": "en",
+        "notifications": true
+      },
+      "tags": ["admin", "billing", "devops"]
+    },
+    {
+      "id": "usr_002",
+      "name": "Bob Nakamura",
+      "email": "bob@acme.io",
+      "role": "developer",
+      "active": true,
+      "age": 27,
+      "joined": "2021-07-01",
+      "preferences": {
+        "theme": "light",
+        "language": "ja",
+        "notifications": false
+      },
+      "tags": ["backend", "typescript", "bun"]
+    },
+    {
+      "id": "usr_003",
+      "name": "Clara Osei",
+      "email": "clara@acme.io",
+      "role": "designer",
+      "active": false,
+      "age": 29,
+      "joined": "2020-11-20",
+      "preferences": {
+        "theme": "dark",
+        "language": "en",
+        "notifications": true
+      },
+      "tags": ["ui", "figma", "accessibility"]
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj_alpha",
+      "name": "Project Alpha",
+      "status": "active",
+      "budget": 120000,
+      "currency": "USD",
+      "deadline": "2025-12-31",
+      "lead": "usr_001",
+      "team": ["usr_001", "usr_002"],
+      "milestones": [
+        { "name": "Design", "done": true, "due": "2025-03-01" },
+        { "name": "MVP",    "done": true, "due": "2025-06-01" },
+        { "name": "Launch", "done": false, "due": "2025-12-31" }
+      ],
+      "metrics": {
+        "commits": 842,
+        "openIssues": 14,
+        "closedIssues": 203,
+        "coverage": 87.4
+      }
+    },
+    {
+      "id": "proj_beta",
+      "name": "Project Beta",
+      "status": "planning",
+      "budget": 45000,
+      "currency": "USD",
+      "deadline": "2026-06-01",
+      "lead": "usr_003",
+      "team": ["usr_002", "usr_003"],
+      "milestones": [
+        { "name": "Discovery", "done": false, "due": "2026-01-15" }
+      ],
+      "metrics": {
+        "commits": 12,
+        "openIssues": 3,
+        "closedIssues": 1,
+        "coverage": 0
+      }
+    }
+  ],
+  "billing": {
+    "plan": "enterprise",
+    "seats": 25,
+    "pricePerSeat": 49,
+    "currency": "USD",
+    "renewsAt": "2026-01-01",
+    "paymentMethod": {
+      "type": "card",
+      "last4": "4242",
+      "brand": "visa",
+      "expiresAt": "2027-09"
+    },
+    "invoices": [
+      { "id": "inv_001", "amount": 1225, "paid": true,  "date": "2025-01-01" },
+      { "id": "inv_002", "amount": 1225, "paid": true,  "date": "2025-04-01" },
+      { "id": "inv_003", "amount": 1225, "paid": false, "date": "2025-07-01" }
+    ]
+  },
+  "featureFlags": {
+    "darkMode": true,
+    "betaEditor": false,
+    "aiAssist": true,
+    "exportPDF": true,
+    "multiTenant": false
+  },
+  "meta": {
+    "version": "2.4.1",
+    "createdAt": "2019-03-15T08:00:00Z",
+    "updatedAt": "2025-07-04T14:32:11Z",
+    "schemaVersion": 3,
+    "tags": ["production", "enterprise", "v2"]
+  }
+}
