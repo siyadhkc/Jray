@@ -2,7 +2,7 @@
 
 > Flatten, query, and reconstruct JSON — fast.
 
-[![npm version](https://img.shields.io/npm/v/jray.svg)](https://npmjs.com/package/jray)
+[![website](https://img.shields.io/badge/website-live-brightgreen)](https://siyadhkc.github.io/Jray)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![built with bun](https://img.shields.io/badge/built%20with-bun-f9f1e1.svg)](https://bun.sh)
 
@@ -33,10 +33,10 @@ jray data.json --select "billing"
 
 ```bash
 # with npm
-npm install -g jray
+npm install -g @siyadkc/jray
 
 # with bun
-bun add -g jray
+bun add -g @siyadkc/jray
 ```
 
 Or download a prebuilt binary from [Releases](https://github.com/siyadhkc/jray/releases) — no runtime required.

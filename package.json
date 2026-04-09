@@ -1,20 +1,37 @@
 {
-  "name": "jray",
+  "name": "@siyadkc/jray",
   "version": "0.1.0",
-  "description": "A modern JSON flattener and query tool — like gron meets jq",
-  "author": "Your Name",
+  "description": "Flatten, filter, and reconstruct JSON from the command line. A modern alternative to gron.",
+  "author": "siyadhkc",
   "license": "MIT",
-
   "bin": {
-    "jray": "./src/cli.ts"
+    "jray": "./dist/jray"
   },
-
   "scripts": {
     "dev": "bun run src/cli.ts",
     "test": "bun test",
     "build": "bun build src/cli.ts --compile --outfile dist/jray"
   },
-
+  "keywords": [
+    "json",
+    "cli",
+    "flatten",
+    "gron",
+    "jq",
+    "query",
+    "typescript",
+    "bun",
+    "command-line",
+    "developer-tools"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/siyadhkc/Jray.git"
+  },
+  "homepage": "https://siyadhkc.github.io/Jray",
+  "bugs": {
+    "url": "https://github.com/siyadhkc/Jray/issues"
+  },
   "devDependencies": {
     "typescript": "^5.0.0",
     "@types/bun": "latest"
