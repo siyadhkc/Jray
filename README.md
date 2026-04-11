@@ -158,6 +158,23 @@ jray data.json --select "organization" > org.json
 
 ---
 
+## What's new in v0.2.0
+
+### Color output
+Output is automatically colorized in terminal. Disable with `--no-color`.
+
+### Fetch from URLs
+```bash
+jray https://api.github.com/users/1
+jray https://api.github.com/users/1 --filter "company"
+```
+
+### Print just values
+```bash
+jray data.json --values
+jray data.json --filter "users" --values
+```
+
 ## How it works
 
 `jray` converts every leaf value in your JSON into a path-value line:
