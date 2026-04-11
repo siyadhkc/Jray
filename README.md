@@ -2,11 +2,12 @@
 
 > Flatten, query, and reconstruct JSON — fast.
 
-[![website](https://img.shields.io/badge/website-live-brightgreen)](https://siyadhkc.github.io/Jray)
+[![npm](https://img.shields.io/npm/v/@siyadkc/jray)](https://npmjs.com/package/@siyadkc/jray)
+[![CI](https://github.com/siyadhkc/Jray/actions/workflows/ci.yml/badge.svg)](https://github.com/siyadhkc/Jray/actions)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![built with bun](https://img.shields.io/badge/built%20with-bun-f9f1e1.svg)](https://bun.sh)
 
-`jray` turns deeply nested JSON into flat, grep-able lines. Query any field by path. Reconstruct JSON from flat lines. Pipe it into anything.
+`jray` turns deeply nested JSON into flat, grep-able lines. Query any field by path. Extract subtrees. Fetch from URLs. Reconstruct back. Pipe it into anything.
 
 Think of it as [`gron`](https://github.com/tomnomnom/gron) meets [`jq`](https://jqlang.org) — but faster, simpler, and written in TypeScript.
 
@@ -14,14 +15,14 @@ Think of it as [`gron`](https://github.com/tomnomnom/gron) meets [`jq`](https://
 
 ## Why jray?
 
-Most JSON tools make you learn a query language. `jray` doesn't. It just makes JSON behave like plain text — so you can use the tools you already know: `grep`, `awk`, `sed`, `cut`.
+Most JSON tools make you learn a query language. `jray` doesn't. It makes JSON behave like plain text so you can use the tools you already know: `grep`, `awk`, `sed`, `cut`.
 
 ```bash
-# Find every field that contains "alice" anywhere in your JSON
-jray data.json | grep -i "alice"
+# Find every email address in any JSON
+jray data.json | grep "email"
 
-# Get all active users
-jray data.json --filter "users" | grep '"active": true'
+# Fetch a live API and explore it instantly
+jray https://jsonplaceholder.typicode.com/users/1
 
 # Extract a subtree as clean JSON
 jray data.json --select "billing"
@@ -39,19 +40,21 @@ npm install -g @siyadkc/jray
 bun add -g @siyadkc/jray
 ```
 
-Or download a prebuilt binary from [Releases](https://github.com/siyadhkc/jray/releases) — no runtime required.
+Requires [Bun](https://bun.sh) `>=1.0.0`.
 
 ---
 
 ## Usage
 
 ```
-jray [options] [file]
+jray [options] [file|url]
 
 Options:
   -u, --ungron          Reconstruct JSON from flat jray lines
   -f, --filter <path>   Show only lines matching a path
   -s, --select <path>   Extract a path as JSON
+      --values          Print just the raw values
+  -m, --no-color        Disable color output
   -v, --version         Show version
   -h, --help            Show help
 ```
@@ -66,37 +69,38 @@ Options:
 $ jray data.json
 
 json.organization.name = "Acme Corporation"
-json.organization.founded = 2019
-json.organization.headquarters.city = "London"
 json.users[0].name = "Alice Pemberton"
-json.users[0].role = "admin"
-json.users[1].name = "Bob Nakamura"
-json.users[1].role = "developer"
+json.users[0].active = true
 json.billing.plan = "enterprise"
-json.billing.seats = 25
 json.featureFlags.darkMode = true
-json.featureFlags.betaEditor = false
-...
+```
+
+Output is automatically colorized in your terminal. Disable with `--no-color`.
+
+### Fetch directly from a URL
+
+```bash
+$ jray https://jsonplaceholder.typicode.com/users/1
+
+json.name = "Leanne Graham"
+json.email = "Sincere@april.biz"
+json.address.city = "Gwenborough"
+json.company.name = "Romaguera-Crona"
 ```
 
 ### Filter by path
 
-Show only lines under a specific key. Unlike `grep`, `--filter` only matches against the **path** — never the value.
-
 ```bash
-$ jray data.json --filter "organization.headquarters"
+$ jray data.json --filter "billing"
 
-json.organization.headquarters.street = "221B Baker Street"
-json.organization.headquarters.city = "London"
-json.organization.headquarters.country = "GB"
-json.organization.headquarters.zip = "NW1 6XE"
-json.organization.headquarters.coordinates.lat = 51.5237
-json.organization.headquarters.coordinates.lng = -0.1585
+json.billing.plan = "enterprise"
+json.billing.seats = 25
+json.billing.currency = "USD"
 ```
 
-### Select a subtree as JSON
+Unlike `grep`, `--filter` only matches against **paths** — never values.
 
-Extract any nested object or array as clean, pretty-printed JSON.
+### Select a subtree as JSON
 
 ```bash
 $ jray data.json --select "billing"
@@ -104,92 +108,42 @@ $ jray data.json --select "billing"
 {
   "plan": "enterprise",
   "seats": 25,
-  "pricePerSeat": 49,
-  "currency": "USD",
-  "renewsAt": "2026-01-01",
-  "paymentMethod": {
-    "type": "card",
-    "last4": "4242",
-    "brand": "visa",
-    "expiresAt": "2027-09"
-  }
+  "currency": "USD"
 }
 ```
 
-### Reconstruct JSON from flat lines
+### Print just values
 
-`--ungron` is the inverse of flatten. Pipe jray output back in to get the original JSON.
+```bash
+$ jray data.json --filter "users" --values
+
+Alice Pemberton
+bob@acme.io
+true
+```
+
+### Reconstruct JSON
 
 ```bash
 $ jray data.json | jray --ungron
-
-{
-  "organization": { ... },
-  "users": [ ... ],
-  ...
-}
-```
-
-### Works with stdin
-
-`jray` reads from stdin when no file is given — making it a first-class pipe citizen.
-
-```bash
-curl -s https://api.example.com/users | jray
-curl -s https://api.example.com/users | jray --filter "address"
-cat data.json | jray --select "featureFlags"
-```
-
-### Combine with standard Unix tools
-
-```bash
-# Which feature flags are enabled?
-jray data.json --filter "featureFlags" | grep "true"
-
-# Count how many users exist
-jray data.json --filter "users" | grep "\.name " | wc -l
-
-# Find all email addresses in the entire document
-jray data.json | grep "email"
-
-# Extract and save a subtree
-jray data.json --select "organization" > org.json
+# outputs original JSON perfectly reconstructed
 ```
 
 ---
 
-## What's new in v0.2.0
-
-### Color output
-Output is automatically colorized in terminal. Disable with `--no-color`.
-
-### Fetch from URLs
-```bash
-jray https://api.github.com/users/1
-jray https://api.github.com/users/1 --filter "company"
-```
-
-### Print just values
-```bash
-jray data.json --values
-jray data.json --filter "users" --values
-```
-
 ## How it works
 
-`jray` converts every leaf value in your JSON into a path-value line:
+Every leaf value gets its own line with the full path:
 
 ```
 json.users[0].preferences.theme = "dark"
 │    │        │            │       │
-│    │        │            │       └─ value (JSON-encoded)
+│    │        │            │       └─ JSON-encoded value
 │    │        │            └───────── key
 │    │        └────────────────────── nested path
 │    └─────────────────────────────── array index
 └──────────────────────────────────── root prefix
 ```
-
-These lines are stable, sortable, and diff-able. They work with any line-oriented Unix tool. And they're fully reversible — `--ungron` reconstructs the original JSON exactly.
 
 ---
 
@@ -201,68 +155,43 @@ These lines are stable, sortable, and diff-able. They work with any line-oriente
 | Reconstruct JSON | ✅ | ❌ | ✅ |
 | Filter by path | ✅ | ✅ | ❌ |
 | Extract subtree as JSON | ✅ | ✅ | ❌ |
-| No query language to learn | ✅ | ❌ | ✅ |
+| Fetch from URLs | ✅ | ❌ | ✅ |
+| Color output | ✅ | ✅ | ✅ |
+| Print raw values | ✅ | ✅ | ✅ |
+| No query language | ✅ | ❌ | ✅ |
 | Zero dependencies | ✅ | ✅ | ✅ |
-| TypeScript / modern codebase | ✅ | ❌ | ❌ |
+| TypeScript / modern | ✅ | ❌ | ❌ |
 
 ---
 
 ## Development
 
 ```bash
-# Clone
-git clone https://github.com/siyadhkc/jray
-cd jray
-
-# Install dependencies
+git clone https://github.com/siyadhkc/Jray
+cd Jray
 bun install
-
-# Run locally
-bun run src/cli.ts data.json
-
-# Run tests
+bun run src/cli.ts test/data.json
 bun test
-
-# Build a standalone binary
-bun build src/cli.ts --compile --outfile dist/jray
-```
-
-### Project structure
-
-```
-jray/
-├── src/
-│   ├── cli.ts          # CLI entry point — argument parsing, I/O
-│   ├── flatten.ts      # JSON → flat lines
-│   ├── unflatten.ts    # flat lines → JSON
-│   └── filter.ts       # path-based filtering and selection
-├── test/
-│   ├── basic.test.ts   # core round-trip tests
-│   ├── data.json       # realistic test dataset
-│   └── edge.json       # edge cases (empty arrays, nulls, deep nesting)
-└── package.json
 ```
 
 ---
 
 ## Contributing
 
-Contributions are welcome! If you find a bug or want a feature, [open an issue](https://github.com/siyadhkc/jray/issues) first so we can discuss it.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) first. PRs welcome!
 
-1. Fork the repo
-2. Create a branch: `git checkout -b feat/your-feature`
-3. Make your changes with tests
-4. Run `bun test` — all tests must pass
-5. Open a pull request
+---
 
-Please keep pull requests focused — one feature or fix per PR.
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE).
 
 ---
 
-<p align="center">Built with ☕ and <a href="https://bun.sh">Bun</a></p>
+<p align="center">Built with ☕ and <a href="https://bun.sh">Bun</a> · <a href="https://siyadhkc.github.io/Jray">Website</a> · <a href="https://npmjs.com/package/@siyadkc/jray">npm</a></p>
