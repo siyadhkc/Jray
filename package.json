@@ -1,11 +1,11 @@
 {
   "name": "@siyadkc/jray",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Flatten, filter, and reconstruct JSON from the command line. A modern alternative to gron.",
   "author": "siyadhkc",
   "license": "MIT",
   "bin": {
-    "jray": "./dist/jray"
+    "jray": "./src/cli.ts"
   },
   "scripts": {
     "dev": "bun run src/cli.ts",
@@ -23,6 +23,11 @@
     "bun",
     "command-line",
     "developer-tools"
+  ],
+  "files": [
+    "src/",
+    "README.md",
+    "LICENSE"
   ],
   "repository": {
     "type": "git",
