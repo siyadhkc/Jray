@@ -1,0 +1,667 @@
+{
+  "info": {
+    "_postman_id": "fffdcf3d-d864-44f9-b3d5-97cc4fa716b0",
+    "name": "Food Delivery API",
+    "description": "StartFragment\n\nFood Delivery API collection includes requests that exercise a typical food-ordering backend running locally (`http://127.0.0.1:8000`). It’s organized as an end-to-end workflow you can use to manually test (or run as a collection) the main user journeys:\n\n- **Auth**: register, user login, and admin login to obtain access for protected endpoints.\n    \n- **Restaurants**: create restaurant resources (admin/setup step).\n    \n- **Menu**\n    \n    - **Categories**: create and list menu categories.\n        \n    - **Items**: create menu items (and related menu item creation requests).\n        \n- **Cart**: add items to a cart and view the current user’s cart.\n    \n- **Orders**: place an order, view the user’s orders, and update an order’s status (admin/restaurant side).\n    \n- **Misc / Unsorted**: utility requests like payment status and a standalone listing request.\n    \n\nUse this collection to validate core flows: **sign up → authenticate → browse/build menu → add to cart → place order → track/update order → check payment status**.\n\nEndFragment",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52487963",
+    "_collection_link": "https://go.postman.co/collection/52487963-fffdcf3d-d864-44f9-b3d5-97cc4fa716b0?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"test@gmail.com\",\r\n    \"username\": \"testuser\",\r\n    \"phone\": \"9999999999\",\r\n    \"password\": \"Test@1234\",\r\n    \"password2\": \"Test@1234\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/api/users/register/",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["api", "users", "register", ""]
+            },
+            "description": "## Purpose\nCreate a new user account.\n\nThis endpoint registers a user with email/username/phone and a password confirmation (`password2`). On success it returns the created user (without password fields).\n\n## Endpoint\n`http://127.0.0.1:8000/api/users/register/`\n\n## Method\n`POST`\n\n## Required headers\n- `Content-Type: application/json`\n- `Accept: application/json` (recommended)\n\n> Authentication: not required for registration.\n\n## Request body (JSON)\n| Field | Type | Required | Notes / Validation |\n|---|---|---:|---|\n| `email` | string | Yes | Must be a valid email format; typically must be unique. |\n| `username` | string | Yes | Typically must be unique; allowed characters depend on server validation. |\n| `phone` | string | Yes | Expected as a string (e.g., digits). Validation depends on server rules. |\n| `password` | string | Yes | Must meet password policy enforced by the API (length/complexity, etc.). |\n| `password2` | string | Yes | **Must match** `password`. Used for confirmation. |\n\n## Example request\n```json\n{\"email\":\"test@gmail.com\",\"username\":\"testuser\",\"phone\":\"9999999999\",\"password\":\"Test@1234\",\"password2\":\"Test@1234\"}\n```\n\n## Success response\n### `201 Created`\n```json\n{\"id\":2,\"email\":\"test@gmail.com\",\"username\":\"testuser\",\"phone\":\"9999999999\"}\n```\n\n## Common error responses\n### `400 Bad Request` (validation)\nReturned when one or more fields are invalid or missing (for example, `password` and `password2` do not match, invalid email format, weak password, etc.). The response body typically contains field-level error messages.\n\n### `409 Conflict` (already exists)\nReturned when the user cannot be created because a unique field already exists (commonly `email` and/or `username`).\n\n## Local development notes\n- This request targets a local server at `127.0.0.1:8000`.\n- Ensure your backend is running locally (e.g., on port `8000`) before sending the request.\n- If your local base URL differs, consider using a variable such as `{{baseUrl}}` for easier switching between environments."
+          },
+          "response": [
+            {
+              "name": "Register",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"email\": \"test@gmail.com\",\r\n    \"username\": \"testuser\",\r\n    \"phone\": \"9999999999\",\r\n    \"password\": \"Test@1234\",\r\n    \"password2\": \"Test@1234\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://127.0.0.1:8000/api/users/register/",
+                  "protocol": "http",
+                  "host": ["127", "0", "0", "1"],
+                  "port": "8000",
+                  "path": ["api", "users", "register", ""]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Date",
+                  "value": "Tue, 24 Mar 2026 11:44:56 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "WSGIServer/0.2 CPython/3.12.10"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Accept, origin"
+                },
+                {
+                  "key": "Allow",
+                  "value": "POST, OPTIONS"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "76"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Cross-Origin-Opener-Policy",
+                  "value": "same-origin"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"id\": 2,\n    \"email\": \"test@gmail.com\",\n    \"username\": \"testuser\",\n    \"phone\": \"9999999999\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "admin login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"admin@gmail.com\",\r\n    \"password\": \"12345678\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/api/users/login/",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["api", "users", "login", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"test@gmail.com\",\r\n    \"password\": \"Test@1234\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/api/users/login/",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["api", "users", "login", ""]
+            },
+            "description": "## Purpose\nAuthenticate a user with email + password and receive JWT tokens.\n\n## Endpoint\n`POST http://127.0.0.1:8000/api/users/login/`\n\n## Method\n`POST`\n\n## Required body fields\nSend JSON in the request body.\n\n| Field | Type | Required | Description |\n|---|---:|:---:|---|\n| `email` | string | Yes | User email address. |\n| `password` | string | Yes | User password. |\n\n## Example request\n```http\nPOST /api/users/login/ HTTP/1.1\nHost: 127.0.0.1:8000\nContent-Type: application/json\n\n{\"email\":\"test@gmail.com\",\"password\":\"Test@1234\"}\n```\n\n## Example 200 response\nOn success, returns a pair of tokens:\n- `access`: short-lived token used to access protected endpoints\n- `refresh`: longer-lived token used to obtain a new access token\n\n```json\n{\n  \"refresh\": \"<jwt_refresh_token>\",\n  \"access\": \"<jwt_access_token>\"\n}\n```\n\n## Common error responses\n> Exact status codes/messages depend on your API implementation.\n\n- **400 Bad Request**: Missing/invalid fields (e.g., malformed email, missing password).\n- **401 Unauthorized**: Invalid credentials (email/password incorrect) or account not allowed to authenticate.\n- **429 Too Many Requests** (if enabled): Too many login attempts / rate-limited.\n- **500 Internal Server Error**: Unexpected server-side error.\n\n## Notes: using the access token\nUse the `access` token as a Bearer token for authenticated requests:\n\n```http\nAuthorization: Bearer <jwt_access_token>\n```\n\nTypically, when the access token expires, use the `refresh` token with your refresh endpoint to obtain a new access token."
+          },
+          "response": [
+            {
+              "name": "Login",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"email\": \"test@gmail.com\",\r\n    \"password\": \"Test@1234\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://127.0.0.1:8000/api/users/login/",
+                  "protocol": "http",
+                  "host": ["127", "0", "0", "1"],
+                  "port": "8000",
+                  "path": ["api", "users", "login", ""]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Date",
+                  "value": "Tue, 24 Mar 2026 11:49:38 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "WSGIServer/0.2 CPython/3.12.10"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Accept, origin"
+                },
+                {
+                  "key": "Allow",
+                  "value": "POST, OPTIONS"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "489"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Cross-Origin-Opener-Policy",
+                  "value": "same-origin"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"refresh\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc3NDk1Nzc3OCwiaWF0IjoxNzc0MzUyOTc4LCJqdGkiOiIwMjljMjcxZTg5YzE0NTllOTdiMWMyOGY1OTI3YTM2MSIsInVzZXJfaWQiOiIyIn0.RXLNdzzIWPOv-X8h8m7AfWTjGsiSDFOhUrMutznQSvc\",\n    \"access\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0MzU2NTc4LCJpYXQiOjE3NzQzNTI5NzgsImp0aSI6IjQ3Y2RlODU0M2VlYTRlNzliMmExNmY4ZjBiZWQ2ZWQ3IiwidXNlcl9pZCI6IjIifQ.1JTWdOGX40UfSR3l9GdR7CBTWv6EZ2N_S1FLVSgCgLs\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Restaurants",
+      "item": [
+        {
+          "name": "create restaurant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0NTI0NzUwLCJpYXQiOjE3NzQ1MjExNTAsImp0aSI6ImUzMmIyNjUyZTQwMDQzNTc5MDdlZGRkYzkxOTVjNjI3IiwidXNlcl9pZCI6IjEifQ.Atic_zE7O0TpQp0ap7IUyKeoQfaqkRTSxffWMC_P3GM",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"Pizza Palace\",\r\n    \"address\": \"123 Main Street\",\r\n    \"phone\": \"9876543210\",\r\n    \"is_active\": true\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/api/restaurant/restaurants/",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["api", "restaurant", "restaurants", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Menu",
+      "item": [
+        {
+          "name": "Categories",
+          "item": [
+            {
+              "name": "create category",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0NTI0NzUwLCJpYXQiOjE3NzQ1MjExNTAsImp0aSI6ImUzMmIyNjUyZTQwMDQzNTc5MDdlZGRkYzkxOTVjNjI3IiwidXNlcl9pZCI6IjEifQ.Atic_zE7O0TpQp0ap7IUyKeoQfaqkRTSxffWMC_P3GM",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\": \"pizza\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://127.0.0.1:8000/api/menu/categories/",
+                  "protocol": "http",
+                  "host": ["127", "0", "0", "1"],
+                  "port": "8000",
+                  "path": ["api", "menu", "categories", ""]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "list categories",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://127.0.0.1:8000/api/menu/categories/",
+                  "protocol": "http",
+                  "host": ["127", "0", "0", "1"],
+                  "port": "8000",
+                  "path": ["api", "menu", "categories", ""]
+                },
+                "description": "## Purpose\nList menu categories.\n\n## Endpoint\n- **Method:** `GET`\n- **URL:** `http://127.0.0.1:8000/api/menu/categories/`\n\n> **Base URL (local dev):** `http://127.0.0.1:8000`\n\n## Authentication\nNone (or as configured by collection).\n\n## Query parameters\nNone.\n\n## Response\n**200 OK** (paginated list)\n\n### Schema\n```json\n{\n  \"count\": 0,\n  \"next\": null,\n  \"previous\": null,\n  \"results\": []\n}\n```\n\n- `count` *(number)*: Total number of categories.\n- `next` *(string|null)*: URL to the next page of results, if any.\n- `previous` *(string|null)*: URL to the previous page of results, if any.\n- `results` *(array)*: List of category objects (shape depends on API implementation).\n\n### Example response\n```json\n{\n  \"count\": 0,\n  \"next\": null,\n  \"previous\": null,\n  \"results\": []\n}\n```"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Items",
+          "item": [
+            {
+              "name": "Create menu item",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0NTI0NzUwLCJpYXQiOjE3NzQ1MjExNTAsImp0aSI6ImUzMmIyNjUyZTQwMDQzNTc5MDdlZGRkYzkxOTVjNjI3IiwidXNlcl9pZCI6IjEifQ.Atic_zE7O0TpQp0ap7IUyKeoQfaqkRTSxffWMC_P3GM",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"restaurant\": 3,\r\n    \"category\": 4,\r\n    \"name\": \"Margherita Pizza\",\r\n    \"description\": \"Classic tomato and cheese\",\r\n    \"price\": \"12.99\",\r\n    \"is_available\": true\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://127.0.0.1:8000/api/menu/items/",
+                  "protocol": "http",
+                  "host": ["127", "0", "0", "1"],
+                  "port": "8000",
+                  "path": ["api", "menu", "items", ""]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "create menu item",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0NTI0NzUwLCJpYXQiOjE3NzQ1MjExNTAsImp0aSI6ImUzMmIyNjUyZTQwMDQzNTc5MDdlZGRkYzkxOTVjNjI3IiwidXNlcl9pZCI6IjEifQ.Atic_zE7O0TpQp0ap7IUyKeoQfaqkRTSxffWMC_P3GM",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"restaurant\": 1,\r\n    \"category\": 1,\r\n    \"name\": \"Margherita Pizza\",\r\n    \"description\": \"Classic tomato and cheese\",\r\n    \"price\": \"12.99\",\r\n    \"is_available\": true\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://127.0.0.1:8000/api/menu/categories/",
+                  "protocol": "http",
+                  "host": ["127", "0", "0", "1"],
+                  "port": "8000",
+                  "path": ["api", "menu", "categories", ""]
+                },
+                "description": "## Purpose\nCreate a new **menu item** for a restaurant.\n\n## Authentication\nRequires a valid **Bearer token**.\n\nHeader:\n```http\nAuthorization: Bearer {{access_token}}\n```\n\n## Endpoint\n```http\nPOST http://127.0.0.1:8000/api/menu/categories/\n```\n\n## Request body (JSON)\nSend a JSON object with the following fields:\n\n| Field | Type | Required | Description |\n|---|---:|:---:|---|\n| `restaurant` | integer | Yes | Restaurant ID that this menu item belongs to. |\n| `category` | integer | Yes | Category ID to group the menu item under. |\n| `name` | string | Yes | Display name of the menu item. |\n| `description` | string | No | Short description of the menu item. |\n| `price` | string/decimal | Yes | Price of the item (often represented as a decimal string). |\n| `is_available` | boolean | No | Whether the item is currently available. |\n\n## Example request\n```http\nPOST http://127.0.0.1:8000/api/menu/categories/\nAuthorization: Bearer {{access_token}}\nContent-Type: application/json\n\n{\"restaurant\":1,\"category\":1,\"name\":\"Margherita Pizza\",\"description\":\"Classic tomato and cheese\",\"price\":\"12.99\",\"is_available\":true}\n```\n\n## Success response\n**201 Created**\n\n```json\n{\"id\":1,\"name\":\"Margherita Pizza\",\"image\":null}\n```\n\n## Common error responses\n- **400 Bad Request** — Validation error (missing/invalid fields, incorrect types, etc.).\n- **401 Unauthorized** — Missing/expired/invalid Bearer token.\n- **403 Forbidden** — Authenticated but not allowed (insufficient permissions / not allowed to create items for the given restaurant).\n"
+              },
+              "response": [
+                {
+                  "name": "create menu item",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0NDY0MTc0LCJpYXQiOjE3NzQ0NjA1NzQsImp0aSI6ImQ5OWE3NGJiNTJkOTRiMzNhNGI4NDhkNzM3YmJkOTM4IiwidXNlcl9pZCI6IjEifQ.GTfX-d83r-nnky4Gy4bLFohRmwACpFUbwvTtnMwTc5Q",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\r\n    \"restaurant\": 1,\r\n    \"category\": 1,\r\n    \"name\": \"Margherita Pizza\",\r\n    \"description\": \"Classic tomato and cheese\",\r\n    \"price\": \"12.99\",\r\n    \"is_available\": true\r\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "http://127.0.0.1:8000/api/menu/categories/",
+                      "protocol": "http",
+                      "host": ["127", "0", "0", "1"],
+                      "port": "8000",
+                      "path": ["api", "menu", "categories", ""]
+                    }
+                  },
+                  "status": "Created",
+                  "code": 201,
+                  "_postman_previewlanguage": null,
+                  "header": [
+                    {
+                      "key": "Date",
+                      "value": "Wed, 25 Mar 2026 17:44:30 GMT"
+                    },
+                    {
+                      "key": "Server",
+                      "value": "WSGIServer/0.2 CPython/3.12.10"
+                    },
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    },
+                    {
+                      "key": "Vary",
+                      "value": "Accept, origin"
+                    },
+                    {
+                      "key": "Allow",
+                      "value": "GET, POST, HEAD, OPTIONS"
+                    },
+                    {
+                      "key": "X-Frame-Options",
+                      "value": "DENY"
+                    },
+                    {
+                      "key": "Content-Length",
+                      "value": "47"
+                    },
+                    {
+                      "key": "X-Content-Type-Options",
+                      "value": "nosniff"
+                    },
+                    {
+                      "key": "Referrer-Policy",
+                      "value": "same-origin"
+                    },
+                    {
+                      "key": "Cross-Origin-Opener-Policy",
+                      "value": "same-origin"
+                    }
+                  ],
+                  "cookie": [],
+                  "body": "{\n    \"id\": 1,\n    \"name\": \"Margherita Pizza\",\n    \"image\": null\n}"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "view my cart",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": " Bearer  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0NTI0NDU2LCJpYXQiOjE3NzQ1MjA4NTYsImp0aSI6Ijk5NTYzZWU1YjkwODQxNDQ4ODk1NTMwNjE4MTUxZTM3IiwidXNlcl9pZCI6IjIifQ.y2Frk6v3QA1xYEtMh_fu1Cx89Tdm67hokgyBc5-Kr0g",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/api/orders/cart/my_cart/",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["api", "orders", "cart", "my_cart", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "add item cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": " Bearer  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0NTI0NDU2LCJpYXQiOjE3NzQ1MjA4NTYsImp0aSI6Ijk5NTYzZWU1YjkwODQxNDQ4ODk1NTMwNjE4MTUxZTM3IiwidXNlcl9pZCI6IjIifQ.y2Frk6v3QA1xYEtMh_fu1Cx89Tdm67hokgyBc5-Kr0g",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"menu_item_id\": 1, \"quantity\":2}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/api/orders/cart/add_item/",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["api", "orders", "cart", "add_item", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "update order status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0NTI0NzUwLCJpYXQiOjE3NzQ1MjExNTAsImp0aSI6ImUzMmIyNjUyZTQwMDQzNTc5MDdlZGRkYzkxOTVjNjI3IiwidXNlcl9pZCI6IjEifQ.Atic_zE7O0TpQp0ap7IUyKeoQfaqkRTSxffWMC_P3GM",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\": \"preparing\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/api/orders/orders/1/update_status/",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["api", "orders", "orders", "1", "update_status", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "view my Order",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": " Bearer  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0NTI0NDU2LCJpYXQiOjE3NzQ1MjA4NTYsImp0aSI6Ijk5NTYzZWU1YjkwODQxNDQ4ODk1NTMwNjE4MTUxZTM3IiwidXNlcl9pZCI6IjIifQ.y2Frk6v3QA1xYEtMh_fu1Cx89Tdm67hokgyBc5-Kr0g",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/api/orders/orders/",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["api", "orders", "orders", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "place order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": " Bearer  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0NTI0NDU2LCJpYXQiOjE3NzQ1MjA4NTYsImp0aSI6Ijk5NTYzZWU1YjkwODQxNDQ4ODk1NTMwNjE4MTUxZTM3IiwidXNlcl9pZCI6IjIifQ.y2Frk6v3QA1xYEtMh_fu1Cx89Tdm67hokgyBc5-Kr0g",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"address\": \"123 Test Street\",\r\n    \"payment_method\": \"cod\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/api/orders/orders/",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["api", "orders", "orders", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Misc / Unsorted",
+      "item": [
+        {
+          "name": "payment status",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0NTI0NzUwLCJpYXQiOjE3NzQ1MjExNTAsImp0aSI6ImUzMmIyNjUyZTQwMDQzNTc5MDdlZGRkYzkxOTVjNjI3IiwidXNlcl9pZCI6IjEifQ.Atic_zE7O0TpQp0ap7IUyKeoQfaqkRTSxffWMC_P3GM",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/api/payments/payments/",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["api", "payments", "payments", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "list res",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

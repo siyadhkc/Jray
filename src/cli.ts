@@ -9,19 +9,7 @@ import { filterLines, selectPath }         from "./filter";
 import { colorizeLines, isColorSupported } from "./color";
 import { isURL, fetchJSON }                from "./fetch";
 
-const args = process.argv.slice(2);
-
-const isUngron     = args.includes("--ungron")   || args.includes("-u");
-const showHelp     = args.includes("--help")     || args.includes("-h");
-const showVersion  = args.includes("--version")  || args.includes("-v");
-const noColor      = args.includes("--no-color") || args.includes("-m");
-const valuesOnly   = args.includes("--values");
-const shouldSort   = args.includes("--sort");
-const showCount    = args.includes("--count");
-const isCompact    = args.includes("--compact")  || args.includes("-c");
-const rawOutput    = args.includes("--raw")      || args.includes("-r");
-
-function getFlagValue(flag: string, short?: string): string | null {
+export function getFlagValue(args: string[], flag: string, short?: string): string | null {
   for (const f of [flag, short].filter(Boolean) as string[]) {
     const idx = args.indexOf(f);
     if (idx === -1) continue;
@@ -32,25 +20,16 @@ function getFlagValue(flag: string, short?: string): string | null {
   return null;
 }
 
-const filterPattern = getFlagValue("--filter", "-f");
-const selectPattern = getFlagValue("--select", "-s");
-
-const filePaths = args.filter((a, i) => {
-  if (a.startsWith("-")) return false;
-  const prev = args[i - 1];
-  if (prev && ["--filter", "-f", "--select", "-s", "--ungron", "-u"].includes(prev)) return false;
-  return true;
-});
-
-if (showVersion) {
-  try {
-    const pkg = await Bun.file(new URL("../package.json", import.meta.url)).json();
-    console.log(`jray v${pkg.version}`);
-  } catch { console.log("jray v0.2.2"); }
-  process.exit(0);
+export function getFilePaths(args: string[]): string[] {
+  return args.filter((a, i) => {
+    if (a.startsWith("-")) return false;
+    const prev = args[i - 1];
+    if (prev && ["--filter", "-f", "--select", "-s"].includes(prev)) return false;
+    return true;
+  });
 }
 
-if (showHelp) {
+function printHelp(): void {
   console.log(`
 jray — a modern JSON flattener and query tool
 
@@ -78,12 +57,11 @@ EXAMPLES:
   jray data.json --select "billing"   Extract subtree as JSON
   jray data.json --values --raw       Print only values without quotes
   jray --ungron data.gron             Reconstruct JSON
-  cat data.json | jray --compact      Output compact JSON
+  cat data.json | jray --select "user" --compact
 `);
-  process.exit(0);
 }
 
-async function readInput(): Promise<string> {
+async function readInput(filePaths: string[]): Promise<string> {
   if (filePaths.length > 0) {
     if (filePaths.length > 1) {
       console.warn(`jray: multiple files provided, using only '${filePaths[0]}'`);
@@ -114,31 +92,57 @@ async function readInput(): Promise<string> {
   return await Bun.stdin.text();
 }
 
-function printLines(lines: string[]): void {
-  const useColor = !noColor && isColorSupported();
-  const output = useColor ? colorizeLines(lines) : lines;
-  for (const line of output) console.log(line);
-}
+export async function main(args = process.argv.slice(2)) {
+  const isUngron     = args.includes("--ungron")   || args.includes("-u");
+  const showHelp     = args.includes("--help")     || args.includes("-h");
+  const showVersion  = args.includes("--version")  || args.includes("-v");
+  const noColor      = args.includes("--no-color") || args.includes("-m");
+  const valuesOnly   = args.includes("--values");
+  const shouldSort   = args.includes("--sort");
+  const showCount    = args.includes("--count");
+  const isCompact    = args.includes("--compact")  || args.includes("-c");
+  const rawOutput    = args.includes("--raw")      || args.includes("-r");
+  const filterPattern = getFlagValue(args, "--filter", "-f");
+  const selectPattern = getFlagValue(args, "--select", "-s");
+  const filePaths = getFilePaths(args);
 
-function extractValues(lines: string[]): string[] {
-  return lines.map(line => {
-    const delimIdx = line.indexOf(" = ");
-    if (delimIdx === -1) return line;
-    const rawValue = line.slice(delimIdx + 3).trim();
-    if (rawOutput && rawValue.startsWith('"') && rawValue.endsWith('"')) {
-      try { return JSON.parse(rawValue).toString(); } catch { return rawValue; }
-    }
-    return rawValue;
-  });
-}
+  if (showVersion) {
+    try {
+      const pkg = await Bun.file(new URL("../package.json", import.meta.url)).json();
+      console.log(`jray v${pkg.version}`);
+    } catch { console.log("jray v0.2.2"); }
+    return;
+  }
 
-function formatJSON(val: unknown): string {
-  if (rawOutput && typeof val === "string") return val;
-  return JSON.stringify(val, null, isCompact ? 0 : 2);
-}
+  if (showHelp) {
+    printHelp();
+    return;
+  }
 
-async function main() {
-  const input = await readInput();
+  function printLines(lines: string[]): void {
+    const useColor = !noColor && isColorSupported();
+    const output = useColor ? colorizeLines(lines) : lines;
+    for (const line of output) console.log(line);
+  }
+
+  function extractValues(lines: string[]): string[] {
+    return lines.map(line => {
+      const delimIdx = line.indexOf(" = ");
+      if (delimIdx === -1) return line;
+      const rawValue = line.slice(delimIdx + 3).trim();
+      if (rawOutput && rawValue.startsWith('"') && rawValue.endsWith('"')) {
+        try { return JSON.parse(rawValue).toString(); } catch { return rawValue; }
+      }
+      return rawValue;
+    });
+  }
+
+  function formatJSON(val: unknown): string {
+    if (rawOutput && typeof val === "string") return val;
+    return JSON.stringify(val, null, isCompact ? 0 : 2);
+  }
+
+  const input = await readInput(filePaths);
 
   if (isUngron) {
     const result = unflatten(input.split("\n"));
@@ -192,7 +196,9 @@ async function main() {
   printLines(lines);
 }
 
-main().catch(err => {
-  console.error(`jray: unexpected error — ${err.message}`);
-  process.exit(1);
-});
+if (import.meta.main) {
+  main().catch(err => {
+    console.error(`jray: unexpected error — ${err.message}`);
+    process.exit(1);
+  });
+}

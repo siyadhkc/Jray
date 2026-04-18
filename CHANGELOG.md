@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- `--ungron <file>` now reads the provided flat file instead of accidentally ignoring it
+- `--filter` / `--select` now support root-array paths like `[0]`
+- `--filter` / `--select` now support bracket-notation root keys like `["dot.key"]`
+- CLI parsing is now easier to test directly
+
+### Changed
+- README expanded with deeper feature coverage, path rules, shell examples, and clearer positioning against `jq` and `gron`
+
+---
+
 ## [0.2.0] — 2026-04-11
 
 ### Added

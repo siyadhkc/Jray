@@ -6,6 +6,22 @@
 
 import { unflatten } from "./unflatten";
 
+function normalizePathPattern(pattern: string): string {
+  if (
+    pattern === "json" ||
+    pattern.startsWith("json.") ||
+    pattern.startsWith("json[")
+  ) {
+    return pattern;
+  }
+
+  if (pattern.startsWith("[")) {
+    return `json${pattern}`;
+  }
+
+  return `json.${pattern}`;
+}
+
 /**
  * FilterResult holds both the matched lines AND metadata about the match.
  *
@@ -41,14 +57,13 @@ export interface FilterResult {
  * "user" should not match "username". This is how jq works too.
  */
 export function filterLines(lines: string[], pattern: string): FilterResult {
-  // Normalize the pattern: strip leading "json." if user typed it,
-  // because our internal paths always start with "json."
-  // WHY: Forgiving input is good UX. Let users type either:
-  //   --filter "user.name"       (short, natural)
-  //   --filter "json.user.name"  (explicit, also works)
-  const normalizedPattern = pattern.startsWith("json.")
-    ? pattern
-    : `json.${pattern}`;
+  // Normalize the pattern so users can target:
+  //   user.name          -> json.user.name
+  //   [0]                -> json[0]
+  //   ["dot.key"]        -> json["dot.key"]
+  //   json.user.name     -> json.user.name
+  //   json["dot.key"]    -> json["dot.key"]
+  const normalizedPattern = normalizePathPattern(pattern);
 
   const matched = lines.filter((line) => {
     // Extract just the path part (left of " = ")
@@ -106,9 +121,7 @@ export function selectPath(lines: string[], pattern: string): unknown {
 
   if (matched.length === 0) return null;
 
-  const normalizedPattern = pattern.startsWith("json.")
-    ? pattern
-    : `json.${pattern}`;
+  const normalizedPattern = normalizePathPattern(pattern);
 
   // Rewrite the matched lines so they're rooted at "json" again,
   // replacing the matched prefix with "json".

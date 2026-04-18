@@ -1,0 +1,3 @@
+json.user.name = "Elliot Alderson"
+json.user.role = "engineer"
+json.flags[0] = true

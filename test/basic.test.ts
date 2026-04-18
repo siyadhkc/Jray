@@ -9,8 +9,13 @@
  */
 
 import { describe, it, expect } from "bun:test";
+import { fileURLToPath } from "url";
 import { flatten } from "../src/flatten";
 import { unflatten } from "../src/unflatten";
+import { filterLines, selectPath } from "../src/filter";
+import { getFilePaths } from "../src/cli";
+
+const flatFixture = fileURLToPath(new URL("./flat.jray", import.meta.url));
 
 // ─── flatten tests ────────────────────────────────────────────────────────────
 
@@ -133,5 +138,41 @@ describe("round-trip (flatten → unflatten)", () => {
     const lines = flatten(original);
     const result = unflatten(lines);
     expect(result).toEqual(original);
+  });
+});
+
+// ─── filter/select tests ──────────────────────────────────────────────────────
+
+describe("filter/select", () => {
+  it("matches root arrays with shorthand bracket paths", () => {
+    const lines = flatten([1, 2, 3]);
+    const result = filterLines(lines, "[0]");
+    expect(result.lines).toEqual(["json[0] = 1"]);
+  });
+
+  it("matches root special-character keys with bracket notation", () => {
+    const lines = flatten({ "dot.key": 1 });
+    const result = filterLines(lines, '["dot.key"]');
+    expect(result.lines).toEqual(['json["dot.key"] = 1']);
+  });
+
+  it("accepts explicit json-prefixed bracket paths", () => {
+    const lines = flatten({ "dot.key": 1 });
+    const result = filterLines(lines, 'json["dot.key"]');
+    expect(result.lines).toEqual(['json["dot.key"] = 1']);
+  });
+
+  it("selects array items from a root array", () => {
+    const lines = flatten([1, 2, 3]);
+    const result = selectPath(lines, "[1]");
+    expect(result).toBe(2);
+  });
+});
+
+// ─── CLI parsing regression tests ─────────────────────────────────────────────
+
+describe("cli", () => {
+  it("treats the value after --ungron as a file path", () => {
+    expect(getFilePaths(["--ungron", flatFixture])).toEqual([flatFixture]);
   });
 });
