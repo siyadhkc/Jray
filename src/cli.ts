@@ -1,12 +1,6 @@
 #!/usr/bin/env bun
 /**
- * cli.ts — Jray CLI v0.2.0
- *
- * NEW IN v0.2.0:
- *   - Color output (auto-detected, respects NO_COLOR standard)
- *   - URL fetching: jray https://api.github.com/users/1
- *   - --no-color / -m flag to force monochrome
- *   - --values flag to print just raw values
+ * cli.ts — Jray CLI v0.2.2
  */
 
 import { flatten }                         from "./flatten";
@@ -17,11 +11,15 @@ import { isURL, fetchJSON }                from "./fetch";
 
 const args = process.argv.slice(2);
 
-const isUngron    = args.includes("--ungron")   || args.includes("-u");
-const showHelp    = args.includes("--help")     || args.includes("-h");
-const showVersion = args.includes("--version")  || args.includes("-v");
-const noColor     = args.includes("--no-color") || args.includes("-m");
-const valuesOnly  = args.includes("--values");
+const isUngron     = args.includes("--ungron")   || args.includes("-u");
+const showHelp     = args.includes("--help")     || args.includes("-h");
+const showVersion  = args.includes("--version")  || args.includes("-v");
+const noColor      = args.includes("--no-color") || args.includes("-m");
+const valuesOnly   = args.includes("--values");
+const shouldSort   = args.includes("--sort");
+const showCount    = args.includes("--count");
+const isCompact    = args.includes("--compact")  || args.includes("-c");
+const rawOutput    = args.includes("--raw")      || args.includes("-r");
 
 function getFlagValue(flag: string, short?: string): string | null {
   for (const f of [flag, short].filter(Boolean) as string[]) {
@@ -40,7 +38,7 @@ const selectPattern = getFlagValue("--select", "-s");
 const filePaths = args.filter((a, i) => {
   if (a.startsWith("-")) return false;
   const prev = args[i - 1];
-  if (prev && ["--filter", "-f", "--select", "-s"].includes(prev)) return false;
+  if (prev && ["--filter", "-f", "--select", "-s", "--ungron", "-u"].includes(prev)) return false;
   return true;
 });
 
@@ -48,7 +46,7 @@ if (showVersion) {
   try {
     const pkg = await Bun.file(new URL("../package.json", import.meta.url)).json();
     console.log(`jray v${pkg.version}`);
-  } catch { console.log("jray v0.2.0"); }
+  } catch { console.log("jray v0.2.2"); }
   process.exit(0);
 }
 
@@ -64,24 +62,32 @@ OPTIONS:
   -f, --filter <path>   Show only lines matching a path
   -s, --select <path>   Extract a path as JSON
       --values          Print just the values (no paths)
+      --sort            Sort keys alphabetically
+      --count           Print only the number of matches
+  -c, --compact         Compact JSON output (no whitespace)
+  -r, --raw             Print raw strings (no quotes)
   -m, --no-color        Disable color output
   -v, --version         Show version
   -h, --help            Show help
 
 EXAMPLES:
-  jray data.json                       Flatten a local file
-  jray https://api.github.com/users/1  Flatten a URL directly
-  jray data.json --filter "user"       Filter by path
-  jray data.json --select "billing"    Extract subtree as JSON
-  jray data.json --values              Print only values
-  jray --ungron data.gron              Reconstruct JSON
-  cat data.json | jray --filter "tags" Pipe from stdin
+  jray data.json                      Flatten a local file
+  jray data.json --sort               Flatten and sort keys
+  jray data.json --filter "user"      Filter by path
+  jray data.json --filter "user" --count
+  jray data.json --select "billing"   Extract subtree as JSON
+  jray data.json --values --raw       Print only values without quotes
+  jray --ungron data.gron             Reconstruct JSON
+  cat data.json | jray --compact      Output compact JSON
 `);
   process.exit(0);
 }
 
 async function readInput(): Promise<string> {
   if (filePaths.length > 0) {
+    if (filePaths.length > 1) {
+      console.warn(`jray: multiple files provided, using only '${filePaths[0]}'`);
+    }
     const input = filePaths[0];
     if (input && isURL(input)) {
       try { return await fetchJSON(input); }
@@ -118,12 +124,17 @@ function extractValues(lines: string[]): string[] {
   return lines.map(line => {
     const delimIdx = line.indexOf(" = ");
     if (delimIdx === -1) return line;
-    const raw = line.slice(delimIdx + 3).trim();
-    if (raw.startsWith('"') && raw.endsWith('"')) {
-      try { return JSON.parse(raw); } catch { return raw; }
+    const rawValue = line.slice(delimIdx + 3).trim();
+    if (rawOutput && rawValue.startsWith('"') && rawValue.endsWith('"')) {
+      try { return JSON.parse(rawValue).toString(); } catch { return rawValue; }
     }
-    return raw;
+    return rawValue;
   });
+}
+
+function formatJSON(val: unknown): string {
+  if (rawOutput && typeof val === "string") return val;
+  return JSON.stringify(val, null, isCompact ? 0 : 2);
 }
 
 async function main() {
@@ -131,7 +142,7 @@ async function main() {
 
   if (isUngron) {
     const result = unflatten(input.split("\n"));
-    console.log(JSON.stringify(result, null, 2));
+    console.log(formatJSON(result));
     return;
   }
 
@@ -143,7 +154,7 @@ async function main() {
     process.exit(1);
   }
 
-  const lines = flatten(parsed);
+  const lines = flatten(parsed, "json", shouldSort);
 
   if (selectPattern) {
     const result = selectPath(lines, selectPattern);
@@ -151,12 +162,16 @@ async function main() {
       console.error(`jray: no match for path "${selectPattern}"`);
       process.exit(1);
     }
-    console.log(JSON.stringify(result, null, 2));
+    console.log(formatJSON(result));
     return;
   }
 
   if (filterPattern) {
     const { lines: matched, count } = filterLines(lines, filterPattern);
+    if (showCount) {
+      console.log(count);
+      return;
+    }
     if (count === 0) {
       console.error(`jray: no match for path "${filterPattern}"`);
       process.exit(1);

@@ -33,25 +33,34 @@ type PathSegment = string | number;
 
 /**
  * parsePath("json.user.tags[0]") → ["json", "user", "tags", 0]
+ * parsePath("json[\"key.with.dot\"]") → ["json", "key.with.dot"]
  *
- * WHY REGEX: The path can mix dot-notation (foo.bar) and bracket-notation
- * (arr[0]). One regex split handles both cleanly.
+ * WHY NOT SIMPLE SPLIT: The path can now contain dots or brackets inside 
+ * quoted keys. A simple split on delimiters would break those keys.
  */
 function parsePath(path: string): PathSegment[] {
   const segments: PathSegment[] = [];
-
-  // Split on dots AND brackets, filtering empty strings from split artifacts.
-  // "json.user.tags[0]" → ["json", "user", "tags", "0", ""]
-  // After filter: ["json", "user", "tags", "0"]
-  const parts = path.split(/\.|\[|\]/).filter((p) => p !== "");
-
-  for (const part of parts) {
-    // If the segment is purely numeric (like "0", "1"), treat it as an array index.
-    // WHY: This is how we know to create [] instead of {} when building structure.
-    if (/^\d+$/.test(part)) {
-      segments.push(parseInt(part, 10));
-    } else {
-      segments.push(part);
+  
+  // This regex matches:
+  // 1. .key or key (at start)
+  // 2. [index]
+  // 3. ["string key"] - handles escaped quotes too
+  const regex = /(?:^|\.)([a-zA-Z_$][a-zA-Z0-9_$]*)|\[(\d+)\]|\["((?:[^"\\]|\\.)*)"\]/g;
+  
+  let match;
+  while ((match = regex.exec(path)) !== null) {
+    if (match[1] !== undefined) {
+      segments.push(match[1]);
+    } else if (match[2] !== undefined) {
+      segments.push(parseInt(match[2], 10));
+    } else if (match[3] !== undefined) {
+      // It's a quoted string from bracket notation. 
+      // We need to unescape it (it was created with JSON.stringify).
+      try {
+        segments.push(JSON.parse(`"${match[3]}"`));
+      } catch {
+        segments.push(match[3]);
+      }
     }
   }
 

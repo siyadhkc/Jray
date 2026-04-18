@@ -59,6 +59,23 @@ describe("flatten", () => {
     const result = flatten(input);
     expect(result).toContain("json.items = []");
   });
+
+  it("escapes keys with special characters", () => {
+    const input = { "dot.key": 1, "space key": 2, "bracket[key]": 3 };
+    const result = flatten(input);
+    expect(result).toContain('json["dot.key"] = 1');
+    expect(result).toContain('json["space key"] = 2');
+    expect(result).toContain('json["bracket[key]"] = 3');
+  });
+
+  it("sorts keys alphabetically when requested", () => {
+    const input = { b: 2, a: 1, c: 3 };
+    const result = flatten(input, "json", true);
+    // Expect specific order: a, b, c
+    expect(result[0]).toBe('json.a = 1');
+    expect(result[1]).toBe('json.b = 2');
+    expect(result[2]).toBe('json.c = 3');
+  });
 });
 
 // ─── unflatten tests ──────────────────────────────────────────────────────────
@@ -82,6 +99,12 @@ describe("unflatten", () => {
     expect(result).toEqual({ tags: ["ts", "bun"] });
   });
 
+  it("reconstructs escaped keys", () => {
+    const lines = ['json["dot.key"] = 1', 'json["space key"] = 2'];
+    const result = unflatten(lines);
+    expect(result).toEqual({ "dot.key": 1, "space key": 2 });
+  });
+
   it("skips empty lines", () => {
     const lines = ['json.name = "Alice"', "", "   "];
     expect(() => unflatten(lines)).not.toThrow();
@@ -99,7 +122,16 @@ describe("round-trip (flatten → unflatten)", () => {
     };
     const lines = flatten(original);
     const result = unflatten(lines);
-    // Deep equality check — the reconstructed object should match the original.
+    expect(result).toEqual(original);
+  });
+
+  it("reconstructs objects with complex keys correctly", () => {
+    const original = {
+      "key with space": { "inner.dot": true },
+      "bracket[key]": [1, 2],
+    };
+    const lines = flatten(original);
+    const result = unflatten(lines);
     expect(result).toEqual(original);
   });
 });

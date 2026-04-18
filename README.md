@@ -53,7 +53,11 @@ Options:
   -u, --ungron          Reconstruct JSON from flat jray lines
   -f, --filter <path>   Show only lines matching a path
   -s, --select <path>   Extract a path as JSON
-      --values          Print just the raw values
+      --values          Print just the values (no paths)
+      --sort            Sort keys alphabetically
+      --count           Print only the number of matches
+  -c, --compact         Compact JSON output (no whitespace)
+  -r, --raw             Print raw strings (no quotes)
   -m, --no-color        Disable color output
   -v, --version         Show version
   -h, --help            Show help
@@ -77,15 +81,21 @@ json.featureFlags.darkMode = true
 
 Output is automatically colorized in your terminal. Disable with `--no-color`.
 
-### Fetch directly from a URL
+### Handle special characters in keys
+
+`jray` automatically handles keys with spaces, dots, or non-standard characters using bracket notation:
 
 ```bash
-$ jray https://jsonplaceholder.typicode.com/users/1
+$ jray config.json
+json["api.endpoint"] = "https://api.acme.io"
+json["version string"] = "1.0.0"
+```
 
-json.name = "Leanne Graham"
-json.email = "Sincere@april.biz"
-json.address.city = "Gwenborough"
-json.company.name = "Romaguera-Crona"
+### Alphabetical sorting
+
+```bash
+$ jray data.json --sort
+# All paths will be printed in alphabetical order
 ```
 
 ### Filter by path
@@ -100,7 +110,7 @@ json.billing.currency = "USD"
 
 Unlike `grep`, `--filter` only matches against **paths** — never values.
 
-### Select a subtree as JSON
+### Extract a subtree as JSON
 
 ```bash
 $ jray data.json --select "billing"
@@ -112,15 +122,19 @@ $ jray data.json --select "billing"
 }
 ```
 
+Use `--compact` or `-c` for one-liner JSON output.
+
 ### Print just values
 
 ```bash
-$ jray data.json --filter "users" --values
+$ jray data.json --filter "users" --values --raw
 
 Alice Pemberton
 bob@acme.io
 true
 ```
+
+Using `--raw` (or `-r`) ensures string values are printed without quotes.
 
 ### Reconstruct JSON
 

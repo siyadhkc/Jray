@@ -2,25 +2,9 @@
  * filter.ts
  *
  * PURPOSE: Filter flattened jray lines by a path pattern.
- *
- * This is what makes Jray a QUERY tool, not just a formatter.
- * Instead of piping to grep, users can do:
- *
- *   jray data.json --filter "user"         → all lines where path contains "user"
- *   jray data.json --filter "user.name"    → exact subtree match
- *   jray data.json --filter "tags[0]"      → specific array element
- *
- * WHY BUILD THIS INSTEAD OF SAYING "just use grep":
- * grep matches anywhere in the line — including in VALUES.
- * e.g. `grep "name"` would match both:
- *   json.user.name = "Alice"       ← correct, path match
- *   json.bio = "my name is Alice"  ← wrong, value match
- *
- * Our filter only matches against the PATH (left side of " = ").
- * That's smarter and more predictable.
  */
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { unflatten } from "./unflatten";
 
 /**
  * FilterResult holds both the matched lines AND metadata about the match.
@@ -142,17 +126,6 @@ export function selectPath(lines: string[], pattern: string): unknown {
     return newPath + value;
   });
 
-  // Use our unflatten engine to reconstruct JSON from the rewritten lines
-  // WHY IMPORT DYNAMICALLY: Avoids circular dependency issues if unflatten
-  // ever imports from filter in the future. For now it's fine as a static import.
-  const { unflatten } = await_unflatten();
+  // Reconstruct JSON from the rewritten lines
   return unflatten(rewritten);
-}
-
-// Small helper to avoid top-level await issues in some environments.
-// In Bun this isn't needed, but it's a defensive pattern.
-function await_unflatten() {
-  // We use a synchronous require-style import here.
-  // In Bun + TypeScript, this works fine for same-project imports.
-  return require("./unflatten") as { unflatten: (lines: string[]) => unknown };
 }
