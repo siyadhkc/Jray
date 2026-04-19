@@ -1,6 +1,6 @@
 {
   "name": "@siyadkc/jray",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Flatten, filter, and reconstruct JSON from the command line. A modern alternative to gron.",
   "author": "siyadhkc",
   "license": "MIT",
