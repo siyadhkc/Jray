@@ -7,16 +7,53 @@ Format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## [Unreleased]
 
+---
+
+## [0.2.4] — 2026-04-20
+
+### Changed
+- npm packaging now publishes `dist/jray.js` as the CLI entry point instead of shipping TypeScript source as the runtime entrypoint
+- `prepack` now builds the CLI automatically during `npm pack` and `npm publish`
+- `build:native` now compiles from the package entrypoint flow instead of a separate ad-hoc path
+
+### Fixed
+- CLI `--version` output now reads the package version dynamically instead of relying on a stale hardcoded fallback
+- HTTP `User-Agent` version now stays aligned with the published package version
+
+---
+
+## [0.2.3] — 2026-04-19
+
+### Changed
+- default build now emits a portable Bun bundle at `dist/jray.js`
+- native binaries are now an explicit `build:native` step instead of the default build output
+- README and package metadata were updated to document the new build flow more clearly
+
+---
+
+## [0.2.2] — 2026-04-18
+
 ### Fixed
 - `--ungron <file>` now reads the provided flat file instead of accidentally ignoring it
 - `--filter` / `--select` now support root-array paths like `[0]`
 - `--filter` / `--select` now support bracket-notation root keys like `["dot.key"]`
-- CLI parsing is now easier to test directly
 
 ### Changed
-- README expanded with deeper feature coverage, path rules, shell examples, and clearer positioning against `jq` and `gron`
-- default build now emits a portable Bun bundle, while native binaries are an explicit `build:native` step
-- npm packaging now publishes `dist/jray.js` as the CLI entry point and auto-builds it during `npm pack` / `npm publish`
+- CLI parsing was refactored to be easier to test directly
+- README was expanded with deeper feature coverage, path rules, shell examples, and clearer positioning against `jq` and `gron`
+- regression tests were added for root-array selection, bracket-notation paths, and `--ungron` file handling
+
+---
+
+## [0.2.1] — 2026-04-11
+
+### Added
+- `src/bin.ts` wrapper added as the npm bin entry point
+- `CONTRIBUTING.md` added to document contribution workflow
+- `CHANGELOG.md` added to track project releases
+
+### Changed
+- README was rewritten and reorganized for clearer installation and usage guidance
 
 ---
 
