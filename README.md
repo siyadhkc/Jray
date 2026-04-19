@@ -88,6 +88,12 @@ That means it is cross-platform in practice on:
 - Linux with Bun
 - Windows with Bun
 
+For maintainers:
+
+- `bun run build` creates a portable Bun-targeted bundle at `dist/jray.js`
+- `bun run build:native` creates a native binary for the current OS
+- on Windows, that native build becomes `dist/jray.exe`
+
 ---
 
 ## Usage
@@ -378,7 +384,8 @@ Current tradeoffs worth knowing:
 - this is not a full JSON query language
 - `--count` is meaningful when used with `--filter`
 - only the first positional file/URL argument is used
-- the published CLI currently depends on Bun being installed
+- the published npm package currently depends on Bun being installed
+- native binaries are an optional build/release artifact, not the default npm install path
 
 Those tradeoffs are reasonable for a focused JSON exploration tool, but they are good to be explicit about.
 
@@ -392,6 +399,8 @@ cd Jray
 bun install
 bun run src/cli.ts test/data.json
 bun test
+bun run build
+bun run build:native
 ```
 
 ---

@@ -13,7 +13,8 @@
   "scripts": {
     "dev": "bun run src/cli.ts",
     "test": "bun test",
-    "build": "bun build src/cli.ts --compile --outfile dist/jray"
+    "build": "bun build src/bin.ts --target bun --outfile dist/jray.js",
+    "build:native": "bun build src/cli.ts --compile --outfile dist/jray"
   },
   "keywords": [
     "json", "cli", "flatten", "gron", "jq",
