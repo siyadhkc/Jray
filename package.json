@@ -1,6 +1,6 @@
 {
   "name": "@siyadkc/jray",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Flatten, filter, and reconstruct JSON from the command line. A modern alternative to gron.",
   "author": "siyadhkc",
   "license": "MIT",
@@ -17,8 +17,16 @@
     "build:native": "bun build src/cli.ts --compile --outfile dist/jray"
   },
   "keywords": [
-    "json", "cli", "flatten", "gron", "jq",
-    "query", "typescript", "bun", "command-line", "developer-tools"
+    "json",
+    "cli",
+    "flatten",
+    "gron",
+    "jq",
+    "query",
+    "typescript",
+    "bun",
+    "command-line",
+    "developer-tools"
   ],
   "files": [
     "src/",
