@@ -8,6 +8,7 @@ import { unflatten }                       from "./unflatten";
 import { filterLines, selectPath }         from "./filter";
 import { colorizeLines, isColorSupported } from "./color";
 import { isURL, fetchJSON }                from "./fetch";
+import { getPackageVersion }               from "./version";
 
 export function getFlagValue(args: string[], flag: string, short?: string): string | null {
   for (const f of [flag, short].filter(Boolean) as string[]) {
@@ -107,10 +108,7 @@ export async function main(args = process.argv.slice(2)) {
   const filePaths = getFilePaths(args);
 
   if (showVersion) {
-    try {
-      const pkg = await Bun.file(new URL("../package.json", import.meta.url)).json();
-      console.log(`jray v${pkg.version}`);
-    } catch { console.log("jray v0.2.2"); }
+    console.log(`jray v${await getPackageVersion()}`);
     return;
   }
 

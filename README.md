@@ -93,6 +93,7 @@ For maintainers:
 - `bun run build` creates a portable Bun-targeted bundle at `dist/jray.js`
 - `bun run build:native` creates a native binary for the current OS
 - on Windows, that native build becomes `dist/jray.exe`
+- the published npm package runs from `dist/jray.js`, not directly from `src/`
 
 ---
 
@@ -401,6 +402,7 @@ bun run src/cli.ts test/data.json
 bun test
 bun run build
 bun run build:native
+npm pack --dry-run
 ```
 
 ---

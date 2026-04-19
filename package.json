@@ -5,7 +5,10 @@
   "author": "siyadhkc",
   "license": "MIT",
   "bin": {
-    "jray": "./src/bin.ts"
+    "jray": "./dist/jray.js"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "bun": ">=1.0.0"
@@ -14,7 +17,8 @@
     "dev": "bun run src/cli.ts",
     "test": "bun test",
     "build": "bun build src/bin.ts --target bun --outfile dist/jray.js",
-    "build:native": "bun build src/cli.ts --compile --outfile dist/jray"
+    "build:native": "bun build src/bin.ts --compile --outfile dist/jray",
+    "prepack": "bun run build"
   },
   "keywords": [
     "json",
@@ -29,7 +33,7 @@
     "developer-tools"
   ],
   "files": [
-    "src/",
+    "dist/",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"

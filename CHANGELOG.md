@@ -16,6 +16,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com).
 ### Changed
 - README expanded with deeper feature coverage, path rules, shell examples, and clearer positioning against `jq` and `gron`
 - default build now emits a portable Bun bundle, while native binaries are an explicit `build:native` step
+- npm packaging now publishes `dist/jray.js` as the CLI entry point and auto-builds it during `npm pack` / `npm publish`
 
 ---
 

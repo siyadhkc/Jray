@@ -1,3 +1,5 @@
+import { getPackageVersion } from "./version";
+
 /**
  * fetch.ts
  *
@@ -53,6 +55,7 @@ export function isURL(input: string): boolean {
  */
 export async function fetchJSON(url: string): Promise<string> {
   let response: Response;
+  const version = await getPackageVersion();
 
   try {
     // AbortSignal.timeout is Bun-native — sets a 20s timeout
@@ -64,7 +67,7 @@ export async function fetchJSON(url: string): Promise<string> {
         // Tell servers we want JSON — some APIs return HTML without this
         "Accept": "application/json, text/plain, */*",
         // Identify ourselves — good practice for open source tools
-        "User-Agent": "jray/0.2.2 (https://github.com/siyadhkc/Jray)",
+        "User-Agent": `jray/${version} (https://github.com/siyadhkc/Jray)`,
       },
     });
   } catch (err) {
