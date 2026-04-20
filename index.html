@@ -4,917 +4,955 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>jray — flatten, query, reconstruct JSON</title>
-  <meta name="description" content="jray turns nested JSON into grep-able lines. Filter by path. Extract subtrees. Reconstruct back. A modern alternative to gron.">
+  <meta name="description" content="jray is a Bun-based CLI for flattening, filtering, and reconstructing JSON. Query by path, extract subtrees, and explore APIs from the terminal.">
   <meta property="og:title" content="jray — flatten, query, reconstruct JSON">
-  <meta property="og:description" content="A modern CLI tool built with Bun and TypeScript. Zero dependencies.">
+  <meta property="og:description" content="A Bun-based CLI for flattening, filtering, and reconstructing JSON from the terminal.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <meta name="google-site-verification" content="vxIFTmRKZ0wOrms1tZhEQxv7-1woO9HFY3O5opq-8FU" />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
 
+  <style>
     :root {
-      --bg: #0a0a0a;
-      --bg2: #111111;
-      --bg3: #1a1a1a;
-      --border: #222222;
-      --border2: #2e2e2e;
-      --text: #e8e6e0;
-      --text2: #888580;
-      --text3: #555250;
-      --green: #4ade80;
-      --green2: #166534;
-      --amber: #fbbf24;
-      --blue: #60a5fa;
-      --red: #f87171;
-      --purple: #a78bfa;
-      --accent: #4ade80;
+      --bg: #f8f7f4;
+      --bg-alt: #f0efe9;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,0.08);
+      --border-med: rgba(0,0,0,0.14);
+      --accent: #5b5bd6;
+      --accent-light: #eeeeff;
+      --text: #111110;
+      --text-2: #6f6e77;
+      --text-3: #b0adb8;
+      --green: #1a9058;
+      --blue: #2776d4;
+      --red: #d13415;
+      --mono: 'DM Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+      --serif: 'DM Serif Display', serif;
+      --radius: 10px;
+      --radius-lg: 16px;
     }
 
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 14px;
+      font-family: var(--sans);
+      font-size: 15px;
       line-height: 1.6;
-      overflow-x: hidden;
-    }
-
-    /* ── Noise overlay ── */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.4;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* ── Nav ── */
     nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 2rem;
-      height: 52px;
+      position: sticky;
+      top: 0; z-index: 100;
+      height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem;
+      background: var(--surface);
       border-bottom: 1px solid var(--border);
-      background: rgba(10,10,10,0.85);
-      backdrop-filter: blur(12px);
     }
 
     .nav-logo {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 18px;
-      color: var(--accent);
-      letter-spacing: -0.02em;
+      font-family: var(--mono);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text);
       text-decoration: none;
+      letter-spacing: -0.02em;
     }
+    .nav-logo span { color: var(--accent); }
 
     .nav-links {
-      display: flex;
-      gap: 1.5rem;
-      list-style: none;
+      display: flex; align-items: center; gap: 2rem; list-style: none;
     }
-
     .nav-links a {
-      color: var(--text2);
-      text-decoration: none;
-      font-size: 13px;
+      font-size: 13px; color: var(--text-2); text-decoration: none;
       transition: color 0.2s;
     }
-
     .nav-links a:hover { color: var(--text); }
 
-    .nav-github {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border: 1px solid var(--border2);
-      border-radius: 6px;
-      color: var(--text) !important;
-      font-size: 12px !important;
-      transition: border-color 0.2s, background 0.2s !important;
+    .nav-cta {
+      display: flex; align-items: center; gap: 7px;
+      padding: 7px 16px; border-radius: var(--radius);
+      background: var(--text); color: var(--surface);
+      font-size: 13px; font-weight: 500; text-decoration: none;
+      transition: opacity 0.2s;
     }
+    .nav-cta:hover { opacity: 0.82; }
+    .nav-cta svg { width: 14px; height: 14px; }
 
-    .nav-github:hover {
-      border-color: var(--accent) !important;
-      background: rgba(74,222,128,0.05) !important;
-      color: var(--accent) !important;
+    .menu-btn {
+      display: none; background: none; border: none;
+      color: var(--text); cursor: pointer; padding: 6px;
     }
 
     /* ── Hero ── */
     .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 7rem 2rem 4rem;
-      position: relative;
+      padding: 7rem 2.5rem 5.5rem;
       text-align: center;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
     }
 
-    .hero-grid {
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(var(--border) 1px, transparent 1px),
-        linear-gradient(90deg, var(--border) 1px, transparent 1px);
-      background-size: 40px 40px;
-      opacity: 0.3;
-      mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black, transparent);
-    }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 14px;
-      border: 1px solid var(--green2);
-      border-radius: 999px;
-      background: rgba(74,222,128,0.05);
-      color: var(--green);
-      font-size: 12px;
-      margin-bottom: 2rem;
-      animation: fadeUp 0.6s ease both;
-    }
-
-    .dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
+    .hero-version {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      background: var(--accent-light);
+      border: 1px solid rgba(91,91,214,0.2);
+      padding: 3px 10px;
+      border-radius: 100px;
+      margin-bottom: 2.25rem;
+      letter-spacing: 0.03em;
     }
 
     h1 {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: clamp(2.5rem, 8vw, 5.5rem);
-      letter-spacing: -0.04em;
-      line-height: 1;
+      font-family: var(--serif);
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--text);
       margin-bottom: 1.5rem;
-      animation: fadeUp 0.6s 0.1s ease both;
+    }
+    h1 em {
+      font-style: italic;
+      color: var(--accent);
     }
 
-    h1 span { color: var(--accent); }
-
     .hero-sub {
-      font-size: clamp(14px, 2vw, 16px);
-      color: var(--text2);
-      max-width: 480px;
-      margin: 0 auto 2.5rem;
-      font-family: 'IBM Plex Mono', monospace;
-      animation: fadeUp 0.6s 0.2s ease both;
+      font-size: clamp(15px, 2vw, 17px);
+      color: var(--text-2);
+      max-width: 520px;
+      margin: 0 auto 2.75rem;
+      line-height: 1.65;
     }
 
     .hero-actions {
-      display: flex;
-      gap: 12px;
+      display: flex; gap: 10px; justify-content: center;
+      margin-bottom: 2.5rem;
       flex-wrap: wrap;
-      justify-content: center;
-      animation: fadeUp 0.6s 0.3s ease both;
     }
 
     .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 24px;
-      background: var(--accent);
-      color: #000;
-      font-family: 'IBM Plex Mono', monospace;
-      font-weight: 600;
-      font-size: 13px;
-      border-radius: 6px;
-      text-decoration: none;
-      transition: opacity 0.2s, transform 0.1s;
+      padding: 10px 24px; border-radius: var(--radius);
+      background: var(--accent); color: white;
+      font-size: 14px; font-weight: 500; text-decoration: none;
+      border: none; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      display: inline-flex; align-items: center; gap: 8px;
     }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary svg { width: 15px; height: 15px; }
 
-    .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
-    .btn-primary:active { transform: scale(0.98); }
-
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 24px;
-      border: 1px solid var(--border2);
-      color: var(--text);
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 13px;
-      border-radius: 6px;
-      text-decoration: none;
+    .btn-outline {
+      padding: 10px 24px; border-radius: var(--radius);
+      background: transparent; color: var(--text);
+      font-size: 14px; font-weight: 500; text-decoration: none;
+      border: 1px solid var(--border-med); cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
+      display: inline-flex; align-items: center; gap: 8px;
     }
+    .btn-outline:hover { background: var(--bg-alt); border-color: var(--text-3); }
 
-    .btn-secondary:hover {
-      border-color: var(--text2);
-      background: var(--bg3);
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Install strip ── */
     .install-strip {
-      margin: 3rem auto 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 20px;
-      background: var(--bg2);
-      border: 1px solid var(--border2);
-      border-radius: 8px;
-      font-size: 13px;
-      animation: fadeUp 0.6s 0.4s ease both;
-      cursor: pointer;
-      position: relative;
+      display: inline-flex; align-items: center; gap: 12px;
+      padding: 10px 18px; border-radius: var(--radius);
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      font-family: var(--mono); font-size: 13px;
+      cursor: pointer; transition: border-color 0.2s;
     }
-
-    .install-strip .prompt { color: var(--green); }
+    .install-strip:hover { border-color: var(--border-med); }
+    .install-strip .dollar { color: var(--accent); }
     .install-strip .cmd { color: var(--text); }
-    .install-strip .copy-btn {
-      margin-left: 12px;
-      color: var(--text3);
-      font-size: 12px;
-      cursor: pointer;
-      transition: color 0.2s;
-      background: none;
-      border: none;
-      font-family: inherit;
+    .install-strip .copy-hint {
+      font-size: 11px; color: var(--text-3);
+      border-left: 1px solid var(--border-med);
+      padding-left: 12px; transition: color 0.2s;
     }
-    .install-strip:hover .copy-btn { color: var(--accent); }
-    .copied { color: var(--accent) !important; }
+    .install-strip:hover .copy-hint { color: var(--accent); }
 
-    /* ── Section ── */
-    section {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 6rem 2rem;
-      position: relative;
-      z-index: 1;
+    /* ── Section wrapper ── */
+    .section {
+      max-width: 900px; margin: 0 auto;
+      padding: 6rem 2.5rem;
     }
 
-    .section-label {
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      color: var(--accent);
-      text-transform: uppercase;
-      margin-bottom: 1rem;
-    }
-
-    h2 {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: clamp(1.6rem, 4vw, 2.4rem);
-      letter-spacing: -0.03em;
-      margin-bottom: 1rem;
-    }
-
-    .section-desc {
-      color: var(--text2);
-      max-width: 520px;
+    .section-head {
       margin-bottom: 3rem;
-      font-size: 14px;
+    }
+    .section-label {
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-3); margin-bottom: 0.6rem;
+      display: block;
+    }
+    h2 {
+      font-family: var(--serif);
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    .section-desc {
+      margin-top: 0.75rem;
+      color: var(--text-2); font-size: 15px; max-width: 500px;
+      line-height: 1.6;
     }
 
     /* ── Terminal ── */
     .terminal {
-      background: var(--bg2);
-      border: 1px solid var(--border2);
-      border-radius: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
       overflow: hidden;
       margin-bottom: 1.5rem;
     }
-
-    .terminal-bar {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 10px 14px;
-      background: var(--bg3);
+    .t-bar {
+      padding: 11px 16px;
       border-bottom: 1px solid var(--border);
+      background: var(--bg-alt);
+      display: flex; align-items: center; gap: 7px;
     }
-
-    .tbar-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
+    .t-bar-title {
+      flex: 1; text-align: center;
+      font-family: var(--mono); font-size: 11px; color: var(--text-3);
     }
-
-    .tbar-dot:nth-child(1) { background: #ff5f57; }
-    .tbar-dot:nth-child(2) { background: #febc2e; }
-    .tbar-dot:nth-child(3) { background: #28c840; }
-
-    .tbar-title {
-      margin-left: auto;
-      margin-right: auto;
-      font-size: 11px;
-      color: var(--text3);
-    }
-
-    .terminal-body {
-      padding: 1.25rem 1.5rem;
-      font-size: 13px;
-      line-height: 2;
+    .tdot { width: 10px; height: 10px; border-radius: 50%; }
+    .t-body {
+      padding: 1.5rem 1.75rem;
+      font-family: var(--mono); font-size: 13px; line-height: 1.9;
       overflow-x: auto;
     }
+    .t-row { display: flex; gap: 0; }
+    .tp { color: var(--accent); margin-right: 10px; user-select: none; }
+    .tc { color: var(--text-3); font-style: italic; }
+    .tk { color: #6e56cf; }
+    .ts { color: var(--green); }
+    .tn { color: var(--blue); }
+    .tb2 { color: var(--red); }
+    .te { color: var(--text-2); }
+    .tsp { height: 0.6rem; }
 
-    .t-prompt { color: var(--green); }
-    .t-cmd { color: var(--text); }
-    .t-flag { color: var(--blue); }
-    .t-arg { color: var(--amber); }
-    .t-key { color: var(--purple); }
-    .t-val-str { color: var(--amber); }
-    .t-val-num { color: var(--blue); }
-    .t-val-bool { color: var(--red); }
-    .t-comment { color: var(--text3); font-style: italic; }
-    .t-out { color: var(--text2); }
-    .t-blank { display: block; height: 0.5rem; }
+    /* ── Demo two-col ── */
+    .demo-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;
+    }
 
-    /* ── Feature grid ── */
-    .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 1px;
+    /* ── Playground ── */
+    .pg-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .pg-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-alt);
+      gap: 12px; flex-wrap: wrap;
+    }
+    .tb-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .mode-tabs {
+      display: flex;
+      border: 1px solid var(--border-med);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .mode-tab {
+      padding: 5px 14px; font-size: 12px; font-family: var(--sans);
+      cursor: pointer; background: transparent;
+      border: none; color: var(--text-2); transition: all 0.15s;
+    }
+    .mode-tab.active {
+      background: var(--surface); color: var(--text); font-weight: 500;
+    }
+    .filter-input {
+      font-family: var(--mono); font-size: 12px;
+      padding: 5px 10px; border-radius: var(--radius);
+      border: 1px solid var(--border-med);
+      background: var(--surface); color: var(--text);
+      width: 160px;
+    }
+    .filter-input::placeholder { color: var(--text-3); }
+    .filter-input:focus { outline: none; border-color: var(--accent); }
+    .run-btn {
+      padding: 5px 16px; font-size: 12px; font-weight: 500;
+      background: var(--accent); color: white;
+      border: none; border-radius: var(--radius); cursor: pointer;
+      font-family: var(--sans); transition: opacity 0.15s;
+    }
+    .run-btn:hover { opacity: 0.85; }
+    .hint { font-size: 11px; color: var(--text-3); font-family: var(--mono); }
+    .pg-body { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+    .pane-label {
+      font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-3); padding: 9px 14px 7px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--sans);
+    }
+    .input-pane { border-right: 1px solid var(--border); }
+    #jray-input {
+      display: block; width: 100%; height: 340px;
+      font-family: var(--mono); font-size: 12.5px; line-height: 1.75;
+      padding: 14px 16px; border: none; resize: none;
+      background: var(--surface); color: var(--text);
+    }
+    #jray-input:focus { outline: none; }
+    .output-body {
+      height: 340px; overflow-y: auto;
+      padding: 14px 16px; font-family: var(--mono); font-size: 12.5px; line-height: 1.9;
+    }
+    .out-line { display: flex; gap: 6px; align-items: baseline; }
+    .out-path { color: #6e56cf; }
+    .out-eq { color: var(--text-3); }
+    .out-str { color: var(--green); }
+    .out-num { color: var(--blue); }
+    .out-bool { color: var(--red); }
+    .out-null { color: var(--text-3); font-style: italic; }
+    .out-empty, .out-error { font-size: 13px; color: var(--text-3); padding: 0.5rem 0; }
+    .out-error { color: var(--red); }
+    .pg-footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg-alt);
+      padding: 8px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .pg-footer-stat { font-size: 11px; color: var(--text-3); font-family: var(--mono); }
+    .copy-out-btn {
+      font-size: 11px; padding: 4px 10px;
+      border: 1px solid var(--border-med);
+      background: var(--surface); border-radius: var(--radius);
+      color: var(--text-2); cursor: pointer; font-family: var(--sans);
+      transition: border-color 0.15s;
+    }
+    .copy-out-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Features ── */
+    .feat-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px;
       background: var(--border);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      margin-top: 3rem;
+      border-radius: var(--radius-lg); overflow: hidden;
     }
-
-    .feature {
-      background: var(--bg);
-      padding: 1.75rem;
-      transition: background 0.2s;
+    .feat-card {
+      padding: 1.75rem 2rem;
+      background: var(--surface);
     }
-
-    .feature:hover { background: var(--bg2); }
-
-    .feature-icon {
-      font-size: 20px;
+    .feat-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--accent-light);
+      display: flex; align-items: center; justify-content: center;
       margin-bottom: 1rem;
-      display: block;
     }
-
-    .feature h3 {
-      font-family: 'Syne', sans-serif;
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
+    .feat-icon svg { width: 16px; height: 16px; color: var(--accent); }
+    .feat-card h3 {
+      font-size: 14px; font-weight: 600; margin-bottom: 0.5rem;
+      color: var(--text);
     }
+    .feat-card p { font-size: 13px; color: var(--text-2); line-height: 1.55; }
+    .feat-wide { grid-column: span 2; }
+    .feat-full { grid-column: span 3; }
 
-    .feature p {
-      font-size: 12px;
-      color: var(--text2);
-      line-height: 1.7;
-    }
-
-    /* ── Comparison table ── */
+    /* ── Compare ── */
     .compare-table {
       width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: var(--radius-lg);
       overflow: hidden;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: var(--surface);
     }
-
     .compare-table th {
-      background: var(--bg3);
-      padding: 12px 16px;
-      text-align: left;
-      font-weight: 500;
-      color: var(--text2);
+      padding: 14px 20px; text-align: left;
+      background: var(--bg-alt);
       border-bottom: 1px solid var(--border);
-      font-size: 12px;
-      letter-spacing: 0.04em;
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-2);
     }
-
-    .compare-table th:first-child { color: var(--text); }
-
     .compare-table td {
-      padding: 12px 16px;
+      padding: 13px 20px;
       border-bottom: 1px solid var(--border);
-      color: var(--text2);
-    }
-
-    .compare-table tr:last-child td { border-bottom: none; }
-
-    .compare-table tr:hover td { background: var(--bg2); }
-
-    .compare-table td:first-child {
-      color: var(--text);
-      font-weight: 500;
-    }
-
-    .check { color: var(--green); }
-    .cross { color: var(--text3); }
-
-    .highlight-col {
-      background: rgba(74,222,128,0.03);
-    }
-
-    /* ── How it works ── */
-    .anatomy {
-      background: var(--bg2);
-      border: 1px solid var(--border2);
-      border-radius: 10px;
-      padding: 2rem;
-      font-size: 13px;
-      overflow-x: auto;
-    }
-
-    .anatomy-line {
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-      margin-bottom: 2.5rem;
-    }
-
-    .anatomy-code {
-      font-size: 15px;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .anatomy-labels {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      padding-top: 2px;
-    }
-
-    .anatomy-tag {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      white-space: nowrap;
-    }
-
-    .tag-prefix { background: rgba(167,139,250,0.15); color: var(--purple); }
-    .tag-path   { background: rgba(96,165,250,0.15);  color: var(--blue); }
-    .tag-value  { background: rgba(251,191,36,0.15);  color: var(--amber); }
-    .tag-sep    { background: rgba(74,222,128,0.15);  color: var(--green); }
-
-    /* ── CTA ── */
-    .cta {
-      text-align: center;
-      padding: 6rem 2rem;
-      position: relative;
-      z-index: 1;
-    }
-
-    .cta-glow {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 500px; height: 200px;
-      background: radial-gradient(ellipse, rgba(74,222,128,0.08), transparent 70%);
-      pointer-events: none;
-    }
-
-    .cta h2 {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(1.8rem, 5vw, 3rem);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      margin-bottom: 1rem;
-    }
-
-    .cta p {
-      color: var(--text2);
-      margin-bottom: 2rem;
       font-size: 14px;
     }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .col-jray { background: rgba(91,91,214,0.03); }
+    .col-jray td { font-weight: 500; }
+    .check { color: var(--green); font-weight: 600; font-size: 15px; }
+    .cross { color: var(--text-3); font-size: 15px; }
+
+    /* ── Anatomy ── */
+    .anatomy-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+    }
+    .anatomy-line {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      font-family: var(--mono); font-size: 16px;
+      margin-bottom: 2rem;
+    }
+    .anatomy-tags {
+      display: flex; gap: 10px; flex-wrap: wrap;
+    }
+    .tag {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 13px; color: var(--text-2);
+    }
+    .tag-pill {
+      padding: 3px 10px; border-radius: 100px;
+      font-family: var(--mono); font-size: 12px; font-weight: 500;
+    }
+
+    /* ── CTA ── */
+    .cta-section {
+      padding: 5rem 2.5rem;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    .cta-section h2 { margin-bottom: 1rem; }
+    .cta-section p { color: var(--text-2); margin-bottom: 2.5rem; font-size: 15px; }
 
     /* ── Footer ── */
     footer {
+      padding: 2.5rem;
       border-top: 1px solid var(--border);
-      padding: 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-      color: var(--text3);
-      position: relative;
-      z-index: 1;
-      flex-wrap: wrap;
-      gap: 1rem;
+      background: var(--bg-alt);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+      font-size: 13px; color: var(--text-3);
     }
-
-    footer a { color: var(--text2); text-decoration: none; }
+    footer a { color: var(--text-2); text-decoration: none; transition: color 0.2s; }
     footer a:hover { color: var(--accent); }
+    .footer-links { display: flex; gap: 1.25rem; }
 
-    /* ── Divider ── */
-    .divider {
-      border: none;
-      border-top: 1px solid var(--border);
-      max-width: 900px;
-      margin: 0 auto;
+    /* ── Mobile menu ── */
+    .mobile-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: var(--surface);
+      flex-direction: column; padding: 0;
     }
+    .mobile-overlay.open { display: flex; }
+    .mob-head {
+      height: 56px; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .mob-links {
+      list-style: none; padding: 2rem 1.5rem;
+      display: flex; flex-direction: column; gap: 0;
+    }
+    .mob-links li a {
+      display: block; padding: 1rem 0;
+      font-size: 22px; font-family: var(--serif);
+      color: var(--text); text-decoration: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .mob-cta { margin: 1.5rem 1.5rem 0; }
 
-    /* ── Scrollbar ── */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-
-    @media (max-width: 600px) {
-      nav { padding: 0 1rem; }
-      .nav-links { display: none; }
-      section { padding: 4rem 1.25rem; }
-      .terminal-body { font-size: 11px; }
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .nav-links, .nav-cta { display: none; }
+      .menu-btn { display: block; }
+      .hero { padding: 4.5rem 1.5rem 4rem; }
+      h1 { font-size: 2.8rem; }
+      .hero-actions { flex-direction: column; align-items: center; }
+      .btn-primary, .btn-outline { width: 100%; max-width: 280px; justify-content: center; }
+      .section { padding: 4rem 1.5rem; }
+      .demo-grid { grid-template-columns: 1fr; }
+      .pg-body { grid-template-columns: 1fr; }
+      .input-pane { border-right: none; border-bottom: 1px solid var(--border); }
+      #jray-input { height: 220px; }
+      .output-body { height: 220px; }
+      .feat-grid { grid-template-columns: 1fr; }
+      .feat-wide, .feat-full { grid-column: span 1; }
+      .compare-table th, .compare-table td { padding: 10px 14px; font-size: 13px; }
+      nav { padding: 0 1.5rem; }
+      .cta-section { padding: 4rem 1.5rem; }
+      footer { padding: 2rem 1.5rem; flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
 <body>
 
 <!-- Nav -->
-<nav>
-  <a href="#" class="nav-logo">jray</a>
+<nav id="navbar">
+  <a href="#" class="nav-logo">jray<span>.</span></a>
   <ul class="nav-links">
     <li><a href="#demo">Demo</a></li>
+    <li><a href="#playground">Playground</a></li>
     <li><a href="#features">Features</a></li>
     <li><a href="#compare">Compare</a></li>
     <li><a href="#install">Install</a></li>
-    <li><a href="https://github.com/siyadhkc/Jray" class="nav-github" target="_blank">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.934.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
-      GitHub
-    </a></li>
   </ul>
+  <a href="https://github.com/siyadhkc/Jray" class="nav-cta" target="_blank">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.934.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+    GitHub
+  </a>
+  <button class="menu-btn" id="menuToggle" aria-label="Open menu">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="8" x2="21" y2="8"/><line x1="3" y1="16" x2="21" y2="16"/></svg>
+  </button>
 </nav>
 
-<!-- Hero -->
-<div class="hero">
-  <div class="hero-grid"></div>
-
-  <div class="hero-badge">
-    <span class="dot"></span>
-    v0.2.4 — built with Bun + TypeScript
+<!-- Mobile overlay -->
+<div class="mobile-overlay" id="mobileMenu">
+  <div class="mob-head">
+    <a href="#" class="nav-logo">jray<span>.</span></a>
+    <button class="menu-btn" id="menuClose" aria-label="Close menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
   </div>
-
-  <h1>JSON that <span>grep</span><br>can understand</h1>
-
-  <p class="hero-sub">
-    jray flattens nested JSON into human-readable lines.<br>
-    Filter by path. Extract subtrees. Reconstruct back.<br>
-    Zero dependencies. Blazing fast.
-  </p>
-
-  <div class="hero-actions">
-    <a href="#install" class="btn-primary">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v14M5 9l7 7 7-7"/><path d="M3 19h18"/></svg>
-      Get started
-    </a>
-    <a href="https://github.com/siyadhkc/Jray" class="btn-secondary" target="_blank">
+  <ul class="mob-links">
+    <li><a href="#demo">Demo</a></li>
+    <li><a href="#playground">Playground</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#compare">Compare</a></li>
+    <li><a href="#install">Install</a></li>
+  </ul>
+  <div class="mob-cta">
+    <a href="https://github.com/siyadhkc/Jray" class="nav-cta" target="_blank" style="width:fit-content">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.934.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
       View on GitHub
     </a>
   </div>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-version">v0.2.4 — now even sharper</div>
+  <h1>JSON that grep<br><em>actually</em> understands</h1>
+  <p class="hero-sub">Flatten nested JSON to readable lines. Filter by path. Reconstruct perfectly. Built for the terminal, powered by Bun.</p>
+
+  <div class="hero-actions">
+    <a href="#playground" class="btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Try live playground
+    </a>
+    <a href="#install" class="btn-outline">Install in seconds</a>
+  </div>
 
   <div class="install-strip" onclick="copyInstall(this)">
-    <span class="prompt">$</span>
-    <span class="cmd">npm install -g @siyadkc/jray</span>
-    <button class="copy-btn" aria-label="Copy">copy</button>
+    <span class="dollar">$</span>
+    <span class="cmd">bun add -g @siyadkc/jray</span>
+    <span class="copy-hint" id="copyHint">click to copy</span>
   </div>
-</div>
-
-<hr class="divider">
+</section>
 
 <!-- Demo -->
-<section id="demo">
-  <div class="section-label">// live demo</div>
-  <h2>See it in action</h2>
-  <p class="section-desc">Four commands that cover everything jray does. Click any to explore further.</p>
+<div id="demo">
+  <div class="section">
+    <div class="section-head">
+      <span class="section-label">Live showcase</span>
+      <h2>The power of flat data</h2>
+      <p class="section-desc">Every leaf value in your JSON gets its own line with a full, grep-able path.</p>
+    </div>
 
-  <div class="terminal">
-    <div class="terminal-bar">
-      <span class="tbar-dot"></span>
-      <span class="tbar-dot"></span>
-      <span class="tbar-dot"></span>
-      <span class="tbar-title">flatten — turn JSON into lines</span>
-    </div>
-    <div class="terminal-body">
-      <div><span class="t-prompt">$</span> <span class="t-cmd">jray</span> <span class="t-arg">data.json</span></div>
-      <span class="t-blank"></span>
-      <div><span class="t-key">json.organization.name</span> <span class="t-out">=</span> <span class="t-val-str">"Acme Corporation"</span></div>
-      <div><span class="t-key">json.organization.founded</span> <span class="t-out">=</span> <span class="t-val-num">2019</span></div>
-      <div><span class="t-key">json.users[0].name</span> <span class="t-out">=</span> <span class="t-val-str">"Alice Pemberton"</span></div>
-      <div><span class="t-key">json.users[0].role</span> <span class="t-out">=</span> <span class="t-val-str">"admin"</span></div>
-      <div><span class="t-key">json.users[0].active</span> <span class="t-out">=</span> <span class="t-val-bool">true</span></div>
-      <div><span class="t-key">json.users[1].name</span> <span class="t-out">=</span> <span class="t-val-str">"Bob Nakamura"</span></div>
-      <div><span class="t-key">json.billing.plan</span> <span class="t-out">=</span> <span class="t-val-str">"enterprise"</span></div>
-      <div><span class="t-key">json.billing.seats</span> <span class="t-out">=</span> <span class="t-val-num">25</span></div>
-      <div><span class="t-key">json.featureFlags.darkMode</span> <span class="t-out">=</span> <span class="t-val-bool">true</span></div>
-      <div><span class="t-key">json.featureFlags.betaEditor</span> <span class="t-out">=</span> <span class="t-val-bool">false</span></div>
-      <div><span class="t-out">... and more</span></div>
-    </div>
-  </div>
+    <div class="demo-grid">
+      <div class="terminal">
+        <div class="t-bar">
+          <span class="tdot" style="background:#ff5f57"></span>
+          <span class="tdot" style="background:#febc2e"></span>
+          <span class="tdot" style="background:#28c840"></span>
+          <span class="t-bar-title">flatten all paths</span>
+        </div>
+        <div class="t-body">
+          <div class="t-row"><span class="tp">$</span><span>jray <span style="color:var(--text-2)">data.json</span></span></div>
+          <div class="tsp"></div>
+          <div><span class="tk">json.organization.name</span> <span class="te">=</span> <span class="ts">"Acme Corporation"</span></div>
+          <div><span class="tk">json.organization.founded</span> <span class="te">=</span> <span class="tn">2019</span></div>
+          <div><span class="tk">json.users[0].name</span> <span class="te">=</span> <span class="ts">"Alice Pemberton"</span></div>
+          <div><span class="tk">json.users[0].role</span> <span class="te">=</span> <span class="ts">"admin"</span></div>
+          <div><span class="tk">json.users[0].active</span> <span class="te">=</span> <span class="tb2">true</span></div>
+          <div><span class="tk">json.billing.plan</span> <span class="te">=</span> <span class="ts">"enterprise"</span></div>
+          <div><span class="tk">json.billing.seats</span> <span class="te">=</span> <span class="tn">25</span></div>
+        </div>
+      </div>
 
-  <div class="terminal">
-    <div class="terminal-bar">
-      <span class="tbar-dot"></span>
-      <span class="tbar-dot"></span>
-      <span class="tbar-dot"></span>
-      <span class="tbar-title">--filter — match by path, not value</span>
-    </div>
-    <div class="terminal-body">
-      <div><span class="t-comment"># grep matches values too — jray --filter only matches paths</span></div>
-      <div><span class="t-prompt">$</span> <span class="t-cmd">jray</span> <span class="t-arg">data.json</span> <span class="t-flag">--filter</span> <span class="t-val-str">"billing"</span></div>
-      <span class="t-blank"></span>
-      <div><span class="t-key">json.billing.plan</span> <span class="t-out">=</span> <span class="t-val-str">"enterprise"</span></div>
-      <div><span class="t-key">json.billing.seats</span> <span class="t-out">=</span> <span class="t-val-num">25</span></div>
-      <div><span class="t-key">json.billing.pricePerSeat</span> <span class="t-out">=</span> <span class="t-val-num">49</span></div>
-      <div><span class="t-key">json.billing.currency</span> <span class="t-out">=</span> <span class="t-val-str">"USD"</span></div>
-      <div><span class="t-key">json.billing.paymentMethod.type</span> <span class="t-out">=</span> <span class="t-val-str">"card"</span></div>
-      <div><span class="t-key">json.billing.paymentMethod.last4</span> <span class="t-out">=</span> <span class="t-val-str">"4242"</span></div>
-    </div>
-  </div>
-
-  <div class="terminal">
-    <div class="terminal-bar">
-      <span class="tbar-dot"></span>
-      <span class="tbar-dot"></span>
-      <span class="tbar-dot"></span>
-      <span class="tbar-title">--select — extract a subtree as JSON</span>
-    </div>
-    <div class="terminal-body">
-      <div><span class="t-prompt">$</span> <span class="t-cmd">jray</span> <span class="t-arg">data.json</span> <span class="t-flag">--select</span> <span class="t-val-str">"organization.headquarters"</span></div>
-      <span class="t-blank"></span>
-      <div><span class="t-out">{</span></div>
-      <div><span class="t-out">&nbsp;&nbsp;</span><span class="t-val-str">"street"</span><span class="t-out">: </span><span class="t-val-str">"221B Baker Street"</span><span class="t-out">,</span></div>
-      <div><span class="t-out">&nbsp;&nbsp;</span><span class="t-val-str">"city"</span><span class="t-out">: </span><span class="t-val-str">"London"</span><span class="t-out">,</span></div>
-      <div><span class="t-out">&nbsp;&nbsp;</span><span class="t-val-str">"country"</span><span class="t-out">: </span><span class="t-val-str">"GB"</span><span class="t-out">,</span></div>
-      <div><span class="t-out">&nbsp;&nbsp;</span><span class="t-val-str">"coordinates"</span><span class="t-out">: { </span><span class="t-val-str">"lat"</span><span class="t-out">: </span><span class="t-val-num">51.5237</span><span class="t-out">, </span><span class="t-val-str">"lng"</span><span class="t-out">: </span><span class="t-val-num">-0.1585</span><span class="t-out"> }</span></div>
-      <div><span class="t-out">}</span></div>
-    </div>
-  </div>
-
-  <div class="terminal">
-    <div class="terminal-bar">
-      <span class="tbar-dot"></span>
-      <span class="tbar-dot"></span>
-      <span class="tbar-dot"></span>
-      <span class="tbar-title">--ungron — reconstruct JSON from flat lines</span>
-    </div>
-    <div class="terminal-body">
-      <div><span class="t-prompt">$</span> <span class="t-cmd">jray</span> <span class="t-arg">data.json</span> <span class="t-out">|</span> <span class="t-cmd">jray</span> <span class="t-flag">--ungron</span></div>
-      <span class="t-blank"></span>
-      <div><span class="t-comment"># outputs the original JSON — perfectly reconstructed</span></div>
-      <div><span class="t-out">{</span></div>
-      <div><span class="t-out">&nbsp;&nbsp;"organization": { ... },</span></div>
-      <div><span class="t-out">&nbsp;&nbsp;"users": [ ... ],</span></div>
-      <div><span class="t-out">&nbsp;&nbsp;"billing": { ... }</span></div>
-      <div><span class="t-out">}</span></div>
-    </div>
-    <div class="terminal">
-  <div class="terminal-bar">
-    <span class="tbar-dot"></span>
-    <span class="tbar-dot"></span>
-    <span class="tbar-dot"></span>
-    <span class="tbar-title">fetch from a URL directly</span>
-  </div>
-  <div class="terminal-body">
-    <div><span class="t-comment"># no curl needed — jray fetches URLs directly</span></div>
-    <div><span class="t-prompt">$</span> <span class="t-cmd">jray</span> <span class="t-arg">https://jsonplaceholder.typicode.com/users/1</span></div>
-    <span class="t-blank"></span>
-    <div><span class="t-key">json.name</span> <span class="t-out">=</span> <span class="t-val-str">"Leanne Graham"</span></div>
-    <div><span class="t-key">json.email</span> <span class="t-out">=</span> <span class="t-val-str">"Sincere@april.biz"</span></div>
-    <div><span class="t-key">json.address.city</span> <span class="t-out">=</span> <span class="t-val-str">"Gwenborough"</span></div>
-    <div><span class="t-key">json.company.name</span> <span class="t-out">=</span> <span class="t-val-str">"Romaguera-Crona"</span></div>
-    <div><span class="t-out">... and more</span></div>
-  </div>
-</div>
-  </div>
-</section>
-
-<hr class="divider">
-
-<!-- Features -->
-<section id="features">
-  <div class="section-label">// why jray</div>
-  <h2>Built for the command line</h2>
-  <p class="section-desc">Everything you need to work with JSON in the terminal — nothing you don't.</p>
-
-  <div class="features">
-    <div class="feature">
-      <span class="feature-icon">⚡</span>
-      <h3>Zero dependencies</h3>
-      <p>Pure TypeScript. No bloated node_modules. Install it and it just works.</p>
-    </div>
-    <div class="feature">
-      <span class="feature-icon">🔍</span>
-      <h3>Path-aware filtering</h3>
-      <p>Unlike grep, --filter only matches against paths — never accidentally matches values.</p>
-    </div>
-    <div class="feature">
-      <span class="feature-icon">🔄</span>
-      <h3>Fully reversible</h3>
-      <p>Flatten and unflatten are perfect inverses. Your JSON comes back exactly as it went in.</p>
-    </div>
-    <div class="feature">
-      <span class="feature-icon">📡</span>
-      <h3>Stdin / stdout</h3>
-      <p>Pipe it into anything. Works with curl, cat, grep, awk — your whole toolchain.</p>
-    </div>
-    <div class="feature">
-      <span class="feature-icon">🦾</span>
-      <h3>Built with Bun</h3>
-      <p>Faster startup than Node. Native TypeScript. Modern runtime for a modern tool.</p>
-    </div>
-    <div class="feature">
-      <span class="feature-icon">🌍</span>
-      <h3>Open source — MIT</h3>
-      <p>Free forever. Read the code, fork it, contribute. Built in public from day one.</p>
-    </div>
-  </div>
-</section>
-
-<hr class="divider">
-
-<!-- How it works -->
-<section>
-  <div class="section-label">// how it works</div>
-  <h2>One line per value</h2>
-  <p class="section-desc">Every leaf value in your JSON gets its own line with the full path shown.</p>
-
-  <div class="anatomy">
-    <div style="margin-bottom: 1.5rem; font-size: 12px; color: var(--text3);">anatomy of a jray line</div>
-    <div class="anatomy-line">
-      <div class="anatomy-code">
-        <span style="color:var(--purple)">json</span><span style="color:var(--text3)">.</span><span style="color:var(--blue)">users[0].preferences.theme</span> <span style="color:var(--green)"> = </span><span style="color:var(--amber)">"dark"</span>
+      <div class="terminal">
+        <div class="t-bar">
+          <span class="tdot" style="background:#ff5f57"></span>
+          <span class="tdot" style="background:#febc2e"></span>
+          <span class="tdot" style="background:#28c840"></span>
+          <span class="t-bar-title">filter by path</span>
+        </div>
+        <div class="t-body">
+          <div class="t-row"><span class="tp">$</span><span>jray <span style="color:var(--text-2)">data.json</span> <span style="color:var(--accent)">--filter</span> <span class="ts">"billing"</span></span></div>
+          <div class="tsp"></div>
+          <div><span class="tk">json.billing.plan</span> <span class="te">=</span> <span class="ts">"enterprise"</span></div>
+          <div><span class="tk">json.billing.seats</span> <span class="te">=</span> <span class="tn">25</span></div>
+          <div class="tsp"></div>
+          <div class="tc"># pipe into grep, awk, anything</div>
+          <div class="t-row"><span class="tp">$</span><span>curl api.example.com/user | jray</span></div>
+          <div class="tsp"></div>
+          <div><span class="tk">json.id</span> <span class="te">=</span> <span class="tn">1042</span></div>
+          <div><span class="tk">json.email</span> <span class="te">=</span> <span class="ts">"alice@example.com"</span></div>
+        </div>
       </div>
     </div>
-    <div style="display:flex; gap: 1.5rem; flex-wrap: wrap; font-size: 12px;">
-      <div><span class="anatomy-tag tag-prefix">json</span> <span style="color:var(--text3)">root prefix</span></div>
-      <div><span class="anatomy-tag tag-path">users[0].preferences.theme</span> <span style="color:var(--text3)">full path</span></div>
-      <div><span class="anatomy-tag tag-sep"> = </span> <span style="color:var(--text3)">delimiter</span></div>
-      <div><span class="anatomy-tag tag-value">"dark"</span> <span style="color:var(--text3)">JSON-encoded value</span></div>
+
+    <!-- Anatomy -->
+    <div class="anatomy-card">
+      <div class="section-label" style="margin-bottom:1rem">Anatomy of a jray line</div>
+      <div class="anatomy-line">
+        <span style="color:#7c3aed">json</span><span style="color:var(--text-3)">.</span><span style="color:#6e56cf">users[0].preferences.theme</span><span style="color:var(--text-3)"> = </span><span style="color:var(--green)">"dark"</span>
+      </div>
+      <div class="anatomy-tags">
+        <div class="tag">
+          <span class="tag-pill" style="background:#f3f0ff;color:#5b21b6">json</span>
+          <span>root prefix</span>
+        </div>
+        <div class="tag">
+          <span class="tag-pill" style="background:#ede9fe;color:#4c1d95">users[0].preferences.theme</span>
+          <span>full path</span>
+        </div>
+        <div class="tag">
+          <span class="tag-pill" style="background:#f0fdf4;color:#14532d">=</span>
+          <span>delimiter</span>
+        </div>
+        <div class="tag">
+          <span class="tag-pill" style="background:#f0fdf4;color:#166534">"dark"</span>
+          <span>JSON-encoded value</span>
+        </div>
+      </div>
     </div>
   </div>
-</section>
+</div>
 
-<hr class="divider">
+<!-- Playground -->
+<div id="playground" style="background:var(--bg-alt); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="section">
+    <div class="section-head">
+      <span class="section-label">Interactive explorer</span>
+      <h2>Play with jray instantly</h2>
+      <p class="section-desc">No install needed. Paste any JSON and explore — a faithful simulation of the real CLI core.</p>
+    </div>
 
-<!-- Comparison -->
-<section id="compare">
-  <div class="section-label">// comparison</div>
-  <h2>vs jq and gron</h2>
-  <p class="section-desc">jray combines the best of both without requiring you to learn a query language.</p>
+    <div class="pg-wrap">
+      <div class="pg-toolbar">
+        <div class="tb-left">
+          <div class="mode-tabs">
+            <button class="mode-tab active" id="tab-flatten" onclick="setMode('flatten')">Flatten</button>
+            <button class="mode-tab" id="tab-filter" onclick="setMode('filter')">Filter</button>
+          </div>
+          <input class="filter-input" id="filter-val" placeholder="path e.g. billing" style="display:none" oninput="run()" />
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="hint">⌘↵ to run</span>
+          <button class="run-btn" onclick="run()">Run</button>
+        </div>
+      </div>
 
-  <table class="compare-table">
-    <thead>
-      <tr>
-        <th>Feature</th>
-        <th class="highlight-col">jray</th>
-        <th>jq</th>
-        <th>gron</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Flatten JSON to lines</td>
-        <td class="highlight-col"><span class="check">✓</span></td>
-        <td><span class="cross">✗</span></td>
-        <td><span class="check">✓</span></td>
-      </tr>
-      <tr>
-        <td>Reconstruct JSON</td>
-        <td class="highlight-col"><span class="check">✓</span></td>
-        <td><span class="cross">✗</span></td>
-        <td><span class="check">✓</span></td>
-      </tr>
-      <tr>
-        <td>Filter by path</td>
-        <td class="highlight-col"><span class="check">✓</span></td>
-        <td><span class="check">✓</span></td>
-        <td><span class="cross">✗</span></td>
-      </tr>
-      <tr>
-        <td>Extract subtree as JSON</td>
-        <td class="highlight-col"><span class="check">✓</span></td>
-        <td><span class="check">✓</span></td>
-        <td><span class="cross">✗</span></td>
-      </tr>
-      <tr>
-        <td>No query language</td>
-        <td class="highlight-col"><span class="check">✓</span></td>
-        <td><span class="cross">✗</span></td>
-        <td><span class="check">✓</span></td>
-      </tr>
-      <tr>
-        <td>Zero dependencies</td>
-        <td class="highlight-col"><span class="check">✓</span></td>
-        <td><span class="check">✓</span></td>
-        <td><span class="check">✓</span></td>
-      </tr>
-      <tr>
-        <td>TypeScript / modern codebase</td>
-        <td class="highlight-col"><span class="check">✓</span></td>
-        <td><span class="cross">✗</span></td>
-        <td><span class="cross">✗</span></td>
-      </tr>
-    </tbody>
-  </table>
-</section>
+      <div class="pg-body">
+        <div class="input-pane">
+          <div class="pane-label">Input JSON</div>
+          <textarea id="jray-input" spellcheck="false">{
+  "organization": {
+    "name": "Acme Corporation",
+    "founded": 2019
+  },
+  "users": [
+    {
+      "name": "Alice Pemberton",
+      "role": "admin",
+      "active": true
+    },
+    {
+      "name": "Bob Nakamura",
+      "role": "user",
+      "active": false
+    }
+  ],
+  "billing": {
+    "plan": "enterprise",
+    "seats": 25,
+    "trialActive": null
+  }
+}</textarea>
+        </div>
 
-<hr class="divider">
+        <div class="output-pane">
+          <div class="pane-label">Output</div>
+          <div class="output-body" id="jray-output"></div>
+        </div>
+      </div>
+
+      <div class="pg-footer">
+        <span class="pg-footer-stat" id="line-count">— lines</span>
+        <button class="copy-out-btn" onclick="copyOutput()">Copy output</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Features -->
+<div id="features">
+  <div class="section">
+    <div class="section-head">
+      <span class="section-label">Features</span>
+      <h2>Built for engineers</h2>
+      <p class="section-desc">Everything you need. Nothing you don't. Zero learning curve.</p>
+    </div>
+
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <h3>Path-aware filtering</h3>
+        <p>--filter matches paths only — never accidentally matches values. Safe and precise.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+        </div>
+        <h3>Fully reversible</h3>
+        <p>Flatten and unflatten are perfect inverses. Your JSON comes back exactly as it went in.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3>Stdin / stdout</h3>
+        <p>Pipe it into anything. Works with curl, cat, grep, awk — your whole toolchain.</p>
+      </div>
+      <div class="feat-card feat-wide">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <h3>Bun-powered runtime</h3>
+        <p>Published through npm, designed to run anywhere Bun is installed — macOS, Linux, or Windows. Small bundle, no heavy dependencies.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        </div>
+        <h3>Open source · MIT</h3>
+        <p>Free forever. Built in public from day one.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Compare -->
+<div id="compare" style="background:var(--bg-alt); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="section">
+    <div class="section-head">
+      <span class="section-label">Comparison</span>
+      <h2>Better than the defaults</h2>
+      <p class="section-desc">jray gives you the best of both worlds — without forcing you to learn a query language.</p>
+    </div>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th style="width:40%">Capability</th>
+          <th style="width:20%">jray</th>
+          <th style="width:20%">jq</th>
+          <th style="width:20%">gron</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Flatten JSON to lines</td>
+          <td class="col-jray"><span class="check">✓</span></td>
+          <td><span class="cross">—</span></td>
+          <td><span class="check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Reconstruct JSON</td>
+          <td class="col-jray"><span class="check">✓</span></td>
+          <td><span class="cross">—</span></td>
+          <td><span class="check">✓</span></td>
+        </tr>
+        <tr>
+          <td>Filter by path</td>
+          <td class="col-jray"><span class="check">✓</span></td>
+          <td><span class="check">✓</span></td>
+          <td><span class="cross">—</span></td>
+        </tr>
+        <tr>
+          <td>Extract subtree as JSON</td>
+          <td class="col-jray"><span class="check">✓</span></td>
+          <td><span class="check">✓</span></td>
+          <td><span class="cross">—</span></td>
+        </tr>
+        <tr>
+          <td>No query language needed</td>
+          <td class="col-jray"><span class="check">✓</span></td>
+          <td><span class="cross">—</span></td>
+          <td><span class="check">✓</span></td>
+        </tr>
+        <tr>
+          <td>TypeScript / modern codebase</td>
+          <td class="col-jray"><span class="check">✓</span></td>
+          <td><span class="cross">—</span></td>
+          <td><span class="cross">—</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <!-- Install -->
-<section id="install">
-  <div class="section-label">// get started</div>
-  <h2>Install in seconds</h2>
-  <p class="section-desc">Pick your package manager. The command is the same after install.</p>
-
-  <div class="terminal">
-    <div class="terminal-bar">
-      <span class="tbar-dot"></span>
-      <span class="tbar-dot"></span>
-      <span class="tbar-dot"></span>
-      <span class="tbar-title">install</span>
+<div id="install">
+  <div class="section">
+    <div class="section-head">
+      <span class="section-label">Install</span>
+      <h2>Up and running in seconds</h2>
+      <p class="section-desc">Requires Bun. Works on macOS, Linux, and Windows.</p>
     </div>
-    <div class="terminal-body">
-      <div><span class="t-comment"># with npm</span></div>
-      <div><span class="t-prompt">$</span> <span class="t-cmd">npm install -g @siyadkc/jray</span></div>
-      <span class="t-blank"></span>
-      <div><span class="t-comment"># with bun</span></div>
-      <div><span class="t-prompt">$</span> <span class="t-cmd">bun add -g @siyadkc/jray</span></div>
-      <span class="t-blank"></span>
-      <div><span class="t-comment"># or clone and run locally</span></div>
-      <div><span class="t-prompt">$</span> <span class="t-cmd">git clone https://github.com/siyadhkc/Jray</span></div>
-      <div><span class="t-prompt">$</span> <span class="t-cmd">cd Jray && bun install && bun link</span></div>
+
+    <div class="terminal">
+      <div class="t-bar">
+        <span class="tdot" style="background:#ff5f57"></span>
+        <span class="tdot" style="background:#febc2e"></span>
+        <span class="tdot" style="background:#28c840"></span>
+        <span class="t-bar-title">installation</span>
+      </div>
+      <div class="t-body">
+        <div class="tc"># install globally with bun</div>
+        <div class="t-row"><span class="tp">$</span><span>bun add -g @siyadkc/jray</span></div>
+        <div class="tsp"></div>
+        <div class="tc"># or with npm</div>
+        <div class="t-row"><span class="tp">$</span><span>npm install -g @siyadkc/jray</span></div>
+        <div class="tsp"></div>
+        <div class="tc"># verify</div>
+        <div class="t-row"><span class="tp">$</span><span>jray --version</span></div>
+        <div><span style="color:var(--text-2)">0.2.4</span></div>
+      </div>
     </div>
   </div>
-
-  <div class="terminal" style="margin-top: 1rem;">
-    <div class="terminal-bar">
-      <span class="tbar-dot"></span>
-      <span class="tbar-dot"></span>
-      <span class="tbar-dot"></span>
-      <span class="tbar-title">usage</span>
-    </div>
-    <div class="terminal-body">
-      <div><span class="t-prompt">$</span> <span class="t-cmd">jray</span> <span class="t-arg">data.json</span>                        <span class="t-comment"># flatten</span></div>
-      <div><span class="t-prompt">$</span> <span class="t-cmd">jray</span> <span class="t-arg">data.json</span> <span class="t-flag">--filter</span> <span class="t-val-str">"user"</span>   <span class="t-comment"># filter by path</span></div>
-      <div><span class="t-prompt">$</span> <span class="t-cmd">jray</span> <span class="t-arg">data.json</span> <span class="t-flag">--select</span> <span class="t-val-str">"user"</span>   <span class="t-comment"># extract as JSON</span></div>
-      <div><span class="t-prompt">$</span> <span class="t-cmd">jray</span> <span class="t-flag">--ungron</span> <span class="t-arg">data.gron</span>            <span class="t-comment"># reconstruct</span></div>
-      <div><span class="t-prompt">$</span> <span class="t-cmd">cat</span> <span class="t-arg">data.json</span> <span class="t-out">|</span> <span class="t-cmd">jray</span> <span class="t-flag">--filter</span> <span class="t-val-str">"tags"</span> <span class="t-comment"># pipe</span></div>
-    </div>
-  </div>
-</section>
+</div>
 
 <!-- CTA -->
-<div class="cta">
-  <div class="cta-glow"></div>
-  <h2>Ready to make JSON<br><span style="color:var(--accent)">actually grep-able?</span></h2>
-  <p>Open source. Zero dependencies. Built with Bun.</p>
-  <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
-    <a href="https://github.com/siyadhkc/Jray" class="btn-primary" target="_blank">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.934.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
-      Star on GitHub
-    </a>
-    <a href="#demo" class="btn-secondary">See the demo</a>
-  </div>
+<div class="cta-section">
+  <span class="section-label">Open source</span>
+  <h2>Make JSON human again.</h2>
+  <p>Free, open source, and ready for your terminal.</p>
+  <a href="https://github.com/siyadhkc/Jray" class="btn-primary" target="_blank" style="width:fit-content;margin:0 auto">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.934.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+    Star on GitHub
+  </a>
 </div>
 
 <!-- Footer -->
 <footer>
-  <span>jray — MIT License</span>
+  <span style="font-family:var(--mono);font-size:13px;">jray — MIT License</span>
   <span>built by <a href="https://github.com/siyadhkc" target="_blank">siyadhkc</a> with Bun + TypeScript</span>
-  <span>
-    <a href="https://github.com/siyadhkc/Jray" target="_blank">GitHub</a> ·
-    <a href="https://github.com/siyadhkc/Jray/issues" target="_blank">Issues</a> ·
-    <a href="https://www.npmjs.com/package/@siyadhkc/jray" target="_blank">npm</a>
-  </span>
+  <div class="footer-links">
+    <a href="https://github.com/siyadhkc/Jray" target="_blank">GitHub</a>
+    <a href="https://github.com/siyadhkc/Jray/issues" target="_blank">Issues</a>
+    <a href="https://www.npmjs.com/package/@siyadkc/jray" target="_blank">npm</a>
+  </div>
 </footer>
 
 <script>
-function copyInstall(el) {
-  navigator.clipboard.writeText('npm install -g @siyadhkc/jray');
-  const btn = el.querySelector('.copy-btn');
-  btn.textContent = 'copied!';
-  btn.classList.add('copied');
-  setTimeout(() => {
-    btn.textContent = 'copy';
-    btn.classList.remove('copied');
-  }, 2000);
-}
-</script>
+  /* Nav scroll */
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.style.borderBottomColor = window.scrollY > 10 ? 'rgba(0,0,0,0.12)' : '';
+  });
 
+  /* Mobile menu */
+  const menu = document.getElementById('mobileMenu');
+  document.getElementById('menuToggle').addEventListener('click', () => {
+    menu.classList.add('open'); document.body.style.overflow = 'hidden';
+  });
+  const closeMenu = () => { menu.classList.remove('open'); document.body.style.overflow = ''; };
+  document.getElementById('menuClose').addEventListener('click', closeMenu);
+  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+
+  /* Copy install */
+  function copyInstall(el) {
+    navigator.clipboard.writeText('bun add -g @siyadkc/jray').then(() => {
+      const hint = document.getElementById('copyHint');
+      hint.textContent = 'copied!';
+      hint.style.color = 'var(--green)';
+      setTimeout(() => { hint.textContent = 'click to copy'; hint.style.color = ''; }, 2000);
+    });
+  }
+
+  /* Playground */
+  let pgMode = 'flatten';
+
+  function setMode(m) {
+    pgMode = m;
+    document.getElementById('tab-flatten').classList.toggle('active', m === 'flatten');
+    document.getElementById('tab-filter').classList.toggle('active', m === 'filter');
+    document.getElementById('filter-val').style.display = m === 'filter' ? 'inline-block' : 'none';
+    run();
+  }
+
+  function flatten(obj, prefix, result) {
+    if (obj === null) { result.push({ path: prefix, type: 'null', val: 'null' }); return; }
+    if (typeof obj !== 'object') {
+      const type = typeof obj;
+      const display = type === 'string' ? '"' + obj.replace(/"/g,'&quot;') + '"' : String(obj);
+      result.push({ path: prefix, type: type === 'string' ? 'str' : type === 'number' ? 'num' : 'bool', val: display });
+      return;
+    }
+    if (Array.isArray(obj)) {
+      obj.forEach((v, i) => flatten(v, prefix + '[' + i + ']', result));
+    } else {
+      Object.keys(obj).forEach(k => flatten(obj[k], prefix + '.' + k, result));
+    }
+  }
+
+  function run() {
+    const raw = document.getElementById('jray-input').value.trim();
+    const out = document.getElementById('jray-output');
+    const countEl = document.getElementById('line-count');
+    let data;
+    try { data = JSON.parse(raw); } catch(e) {
+      out.innerHTML = '<div class="out-error">Invalid JSON — ' + e.message + '</div>';
+      countEl.textContent = '— lines'; return;
+    }
+    const all = [];
+    flatten(data, 'json', all);
+    let lines = all;
+    if (pgMode === 'filter') {
+      const q = document.getElementById('filter-val').value.toLowerCase().trim();
+      if (q) lines = all.filter(l => l.path.toLowerCase().includes(q));
+    }
+    if (lines.length === 0) {
+      out.innerHTML = '<div class="out-empty">No matching paths found.</div>';
+      countEl.textContent = '0 lines'; return;
+    }
+    const tc = { str: 'out-str', num: 'out-num', bool: 'out-bool', null: 'out-null' };
+    out.innerHTML = lines.map(l =>
+      `<div class="out-line"><span class="out-path">${l.path}</span><span class="out-eq"> = </span><span class="${tc[l.type] || 'out-str'}">${l.val}</span></div>`
+    ).join('');
+    countEl.textContent = lines.length + (lines.length === 1 ? ' line' : ' lines');
+  }
+
+  function copyOutput() {
+    const lines = document.querySelectorAll('#jray-output .out-line');
+    if (!lines.length) return;
+    const text = Array.from(lines).map(l => l.innerText.trim()).join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.copy-out-btn');
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = orig, 1500);
+    });
+  }
+
+  document.getElementById('jray-input').addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); run(); }
+  });
+  document.getElementById('jray-input').addEventListener('input', run);
+
+  run();
+</script>
 </body>
 </html>
