@@ -9,6 +9,8 @@
 
 `jray` turns nested JSON into flat, grep-able lines, lets you filter by path, extract subtrees, read from URLs or stdin, and reconstruct the original JSON again.
 
+`jray` is a Bun-based CLI. The npm package is published through npm, but it still requires the Bun runtime on the machine where you run it.
+
 Think of it as a practical middle ground:
 
 - closer to `gron` for exploration
@@ -68,11 +70,24 @@ Path matching supports:
 - bracket notation for special keys like `["dot.key"]`
 - explicit full paths like `json.users[0]` and shorthand paths like `users[0]`
 
+## Runtime Requirement
+
+`jray` requires [Bun](https://bun.sh) at runtime.
+
+- `npm install -g @siyadkc/jray` installs the package metadata and CLI entrypoint through npm
+- Bun is still required to actually run the `jray` command
+- if Bun is not installed, the CLI will not run correctly
+
+Install Bun first, then install `jray`.
+
 ---
 
 ## Install
 
 ```bash
+# first install Bun
+# https://bun.sh
+
 # npm
 npm install -g @siyadkc/jray
 
@@ -233,6 +248,8 @@ $ cat data.json | jray --filter "meta"
 $ curl -s https://api.example.com/data | jray --select "results[0]"
 ```
 
+These examples assume Bun is installed and available in your `PATH`.
+
 PowerShell:
 
 ```powershell
@@ -386,6 +403,7 @@ Current tradeoffs worth knowing:
 - `--count` is meaningful when used with `--filter`
 - only the first positional file/URL argument is used
 - the published npm package currently depends on Bun being installed
+- `npm install -g @siyadkc/jray` does not remove the Bun runtime requirement
 - native binaries are an optional build/release artifact, not the default npm install path
 
 Those tradeoffs are reasonable for a focused JSON exploration tool, but they are good to be explicit about.

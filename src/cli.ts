@@ -33,6 +33,7 @@ export function getFilePaths(args: string[]): string[] {
 function printHelp(): void {
   console.log(`
 jray — a modern JSON flattener and query tool
+Bun runtime required
 
 USAGE:
   jray [options] [file|url]

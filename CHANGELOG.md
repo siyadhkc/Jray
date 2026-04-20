@@ -7,6 +7,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com).
 
 ## [Unreleased]
 
+### Changed
+- README and package metadata now make the Bun runtime requirement explicit for npm users
+- CLI help output now mentions that Bun is required at runtime
+
 ---
 
 ## [0.2.4] — 2026-04-20
