@@ -34,7 +34,6 @@ All tests must pass before submitting a pull request.
 
 ## Project structure
 
-```
 src/
   cli.ts        # CLI entry point — argument parsing and I/O only
   bin.ts        # npm bin wrapper — do not put logic here
@@ -47,7 +46,6 @@ test/
   basic.test.ts # core tests
   data.json     # realistic test dataset
   edge.json     # edge cases
-```
 
 ## Submitting a pull request
 
